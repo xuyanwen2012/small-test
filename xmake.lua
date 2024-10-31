@@ -107,3 +107,4 @@ end
 includes("ppl")
 includes("tests")
 includes("demos")
+includes("benchmarks")

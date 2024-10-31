@@ -1,9 +1,9 @@
-#include "host_dispatcher.hpp"
+#include "host/host_dispatcher.hpp"
 
 #include <barrier>
 #include <numeric>
 
-#include "02_sort_impl.hpp"
+#include "host/02_sort_impl.hpp"
 #include "host/brt_func.hpp"
 #include "shared/edge_func.h"
 #include "shared/oct_func.h"
@@ -45,8 +45,8 @@ void dispatch_RadixSort(core::thread_pool& pool,
       .wait();
 }
 
-void dispatch_RemoveDuplicates(core::thread_pool& pool,
-                               int num_threads,
+void dispatch_RemoveDuplicates([[maybe_unused]] core::thread_pool& pool,
+                               [[maybe_unused]] int num_threads,
                                const std::shared_ptr<Pipe>& p) {
   const auto last = std::unique_copy(
       p->u_morton, p->u_morton + p->n_input(), p->u_morton_alt);
@@ -89,7 +89,7 @@ void dispatch_EdgeCount(core::thread_pool& pool,
 }
 
 void dispatch_EdgeOffset(core::thread_pool& pool,
-                         int num_threads,
+                         [[maybe_unused]] int num_threads,
                          const std::shared_ptr<const Pipe>& p) {
   pool.submit_task([p]() {
         std::partial_sum(p->u_edge_counts,

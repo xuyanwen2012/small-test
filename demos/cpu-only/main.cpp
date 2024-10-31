@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "core/thread_pool.hpp"
-#include "host_dispatcher.hpp"
+#include "host/host_dispatcher.hpp"
 #include "shared/structures.h"
 #include "third-party/CLI11.hpp"
 #include "utils.hpp"
