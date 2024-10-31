@@ -1,7 +1,7 @@
 
 target("demo1")
     set_kind("binary")
-    add_files("demo1.cpp")
+    add_files("demo1/demo1.cpp")
     add_includedirs("$(projectdir)/include")
     if is_plat("android") then
         on_run(run_on_android)
