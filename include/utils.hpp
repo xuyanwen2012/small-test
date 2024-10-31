@@ -249,6 +249,17 @@ inline bool validate_cores(std::span<const int> cores) {
   return true;
 }
 
+// write a function, given a vector of cores id, return only the valid cores
+[[nodiscard]]
+inline std::vector<int> get_valid_cores(std::span<const int> cores) {
+  const auto available_cores = get_available_cores();
+  std::vector<int> result;
+
+  std::ranges::set_intersection(
+      cores, available_cores, std::back_inserter(result));
+  return result;
+}
+
 inline void print_device_profile(const PhoneSpecs *specs) {
   const int width = 15;  // For alignment
   const std::string separator(50, '-');
