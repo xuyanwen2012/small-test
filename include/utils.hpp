@@ -1,15 +1,19 @@
 #pragma once
 
+#include <sched.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
-#include <sched.h>
 #include <span>
 #include <string_view>
 #include <thread>
 #include <vector>
+
+#include "configs.hpp"
 
 /**
  * @namespace utils
@@ -59,8 +63,8 @@ inline std::vector<int> get_available_cores() {
   CPU_ZERO(&cpuset);
 
   if (sched_getaffinity(0, sizeof(cpu_set_t), &cpuset) != 0) {
-    throw std::system_error(errno, std::system_category(),
-                            "Failed to get CPU affinity");
+    throw std::system_error(
+        errno, std::system_category(), "Failed to get CPU affinity");
   }
 
   std::vector<int> available_cores;
@@ -109,9 +113,10 @@ inline void set_cpu_affinity(int core_id) {
   CPU_SET(core_id, &cpuset);
 
   if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) != 0) {
-    throw std::system_error(errno, std::system_category(),
-                            "Failed to set CPU affinity to core " +
-                                std::to_string(core_id));
+    throw std::system_error(
+        errno,
+        std::system_category(),
+        "Failed to set CPU affinity to core " + std::to_string(core_id));
   }
 }
 
@@ -148,8 +153,7 @@ inline std::vector<CoreFrequency> get_core_frequencies() {
     snprintf(path, sizeof(path), freq_path.data(), core_index);
 
     std::ifstream file(path);
-    if (!file)
-      break;
+    if (!file) break;
 
     int freq_khz;
     if (file >> freq_khz) {
@@ -193,16 +197,24 @@ inline std::vector<CoreFrequency> get_core_frequencies() {
  * @throws std::runtime_error If no cores are available
  */
 inline void display_core_info() {
-  std::cout << "System Core Information:\n"
-            << "----------------------\n"
-            << "Total logical cores: " << std::thread::hardware_concurrency()
-            << '\n';
+  const int width = 20;  // For alignment
+  const std::string separator(50, '-');
+
+  std::cout << "\n" << separator << "\n";
+  std::cout << "System Core Information\n";
+  std::cout << separator << "\n\n";
+
+  std::cout << std::left << std::setw(width)
+            << "Total logical cores:" << std::thread::hardware_concurrency()
+            << "\n\n";
 
   const auto frequencies = get_core_frequencies();
   if (!frequencies.empty()) {
-    std::cout << "\nCore Frequencies:\n";
+    std::cout << "Core Frequencies:\n";
     for (const auto &[core, freq] : frequencies) {
-      std::cout << "Core " << core << ": " << freq << " GHz\n";
+      std::cout << std::left << std::setw(width)
+                << "Core " + std::to_string(core) + ":" << std::fixed
+                << std::setprecision(2) << freq << " GHz\n";
     }
   } else {
     std::cout << "Unable to read core frequencies\n";
@@ -213,10 +225,10 @@ inline void display_core_info() {
     throw std::runtime_error("No CPU cores available for the current process");
   }
 
-  std::cout << "\nAvailable cores for pinning: ";
+  std::cout << "\n" << std::left << std::setw(width) << "Available cores:";
   std::ranges::copy(available_cores,
                     std::ostream_iterator<int>(std::cout, " "));
-  std::cout << '\n';
+  std::cout << "\n\n";
 }
 
 /**
@@ -237,4 +249,29 @@ inline bool validate_cores(std::span<const int> cores) {
   return true;
 }
 
-} // namespace utils
+inline void print_device_profile(const PhoneSpecs *specs) {
+  const int width = 15;  // For alignment
+  const std::string separator(50, '-');
+
+  std::cout << "\n" << separator << "\n";
+  std::cout << "Device Profile: " << specs->alias << "\n";
+  std::cout << separator << "\n\n";
+
+  // Print cores in an organized manner
+  std::cout << std::left << std::setw(width) << "Small cores:";
+  std::ranges::copy(specs->small_cores,
+                    std::ostream_iterator<int>(std::cout, " "));
+  std::cout << "\n";
+
+  std::cout << std::left << std::setw(width) << "Mid cores:";
+  std::ranges::copy(specs->mid_cores,
+                    std::ostream_iterator<int>(std::cout, " "));
+  std::cout << "\n";
+
+  std::cout << std::left << std::setw(width) << "Big cores:";
+  std::ranges::copy(specs->big_cores,
+                    std::ostream_iterator<int>(std::cout, " "));
+  std::cout << "\n\n";
+}
+
+}  // namespace utils

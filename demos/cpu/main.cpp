@@ -5,6 +5,7 @@
 #include <random>
 #include <vector>
 
+#include "configs.hpp"
 #include "core/thread_pool.hpp"
 #include "host/host_dispatcher.hpp"
 #include "shared/structures.h"
@@ -49,14 +50,13 @@ int main(int argc, char** argv) {
   CLI::App app{"CPU Morton code computation demo"};
 
   // Command line parameters
-  std::vector<int> small_cores;
+  // std::vector<int> small_cores;
   int num_threads;
   int problem_size;
   int iterations;
 
-  app.add_option("-s,--small_cores", small_cores, "Small cores to use")
-      ->default_val(std::vector<int>{0, 1, 2, 3})
-      ->check(CLI::Range(0, 8));
+  std::string device_id;
+  app.add_option("--device", device_id, "Device ID")->default_val("jetson");
 
   app.add_option("-t,--threads", num_threads, "Number of threads")
       ->default_val(4)
@@ -72,18 +72,17 @@ int main(int argc, char** argv) {
   CLI11_PARSE(app, argc, argv);
 
   try {
-    utils::display_core_info();
-
-    if (!utils::validate_cores(small_cores)) {
+    auto phone_specs = get_phone_specs(device_id);
+    if (!phone_specs) {
+      std::cerr << "Invalid device ID: " << device_id << std::endl;
       return EXIT_FAILURE;
     }
 
-    std::cout << "Configuration:\n"
-              << "- Using cores: ";
-    std::ranges::copy(small_cores, std::ostream_iterator<int>(std::cout, " "));
-    std::cout << "\n- Threads: " << num_threads
-              << "\n- Problem size: " << problem_size
-              << "\n- Iterations: " << iterations << "\n";
+    const auto small_cores = phone_specs.value()->small_cores;
+    const auto mid_cores = phone_specs.value()->mid_cores;
+    const auto big_cores = phone_specs.value()->big_cores;
+
+    utils::print_device_profile(phone_specs.value());
 
     core::thread_pool pool(small_cores);
 

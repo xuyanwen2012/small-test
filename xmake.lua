@@ -77,8 +77,8 @@ function run_on_android(target)
     import("core.base.option")
     local args = option.get("arguments") or {}
 
-    for _, device_id in ipairs(devices) do
-        print(string.format("Running %s on device: %s", target_name, device_id))
+    for i, device_id in ipairs(devices) do
+        print(string.format("[%d/%d] Running %s on device: %s", i, #devices, target_name, device_id))
         
         -- Deploy and execute
         local adb_commands = {
@@ -95,10 +95,13 @@ function run_on_android(target)
         
         -- Run the binary with arguments
         local run_command = {"-s", device_id, "shell", remote_path}
-        table.join2(run_command, args)
+
+        table.join2(run_command, args, {"--device=" .. device_id})
         if os.execv("adb", run_command) ~= 0 then
             raise(string.format("Failed to run %s", target_name))
         end
+
+        print()
     end
 end
 
