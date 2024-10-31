@@ -2,10 +2,9 @@
 #include <mutex>
 #include <vector>
 
-#include "thread_pool.hpp"
-#include "utils.hpp"
-
+#include "core/thread_pool.hpp"
 #include "third-party/CLI11.hpp"
+#include "utils.hpp"
 
 int main(int argc, char **argv) {
   CLI::App app{"CPU demo of using all threads"};
@@ -32,7 +31,8 @@ int main(int argc, char **argv) {
   core::thread_pool pool(small_cores);
 
   std::mutex mtx;
-  pool.submit_blocks(0, 123,
+  pool.submit_blocks(0,
+                     123,
                      [&](const auto start, const auto end) {
                        utils::busy_wait_for(std::chrono::seconds(2));
                        {

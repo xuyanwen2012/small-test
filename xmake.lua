@@ -32,6 +32,8 @@ add_requires("glm 1.0.*", {alias = "glm"})
 add_requires("gtest 1.15.*", {alias = "gtest"})
 add_requires("benchmark 1.9.*", {alias = "benchmark"})
 
+add_requires("vulkan-headers", "volk")
+
 local ANDROID_CONFIG = {
     ignored_devices = {"ZY22FLDDK7"},
     remote_base_path = "/data/local/tmp"  -- Base directory for all executables
@@ -100,13 +102,8 @@ function run_on_android(target)
     end
 end
 
-target("small-test")
-    set_kind("binary")
-    
-    add_files("src/*.cpp")
-    add_headerfiles("src/*.hpp")
-    add_includedirs("$(projectdir)/include")
-    
-    if is_plat("android") then
-        on_run(run_on_android)
-    end
+--
+
+includes("demos")
+includes("tests")
+
