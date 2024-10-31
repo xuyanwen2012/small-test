@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "shared/morton_func.h"
 #include "shared/structures.h"
 
@@ -39,7 +41,7 @@ inline int log2_ceil_u32(const unsigned int x) {
 inline void process_radix_tree_i(const int i,
                                  const int n /*n_brt_nodes*/,
                                  const morton_t* codes,
-                                 const radix_tree* out_brt) {
+                                 const RadixTree* out_brt) {
   // 'i' is the iterator within a chunk
   // 'codes' is the base address of the whole data, for each chunk, we need to
   // use the offset 'out_brt' is the base address of the whole data, for each

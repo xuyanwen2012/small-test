@@ -1,11 +1,9 @@
-#include "host/02_sort.hpp"
-
 #include <algorithm>
 #include <numeric>
 
 #include "block.hpp"
-
 #include "core/thread_pool.hpp"
+#include "host/02_sort.hpp"
 
 constexpr int BASE_BITS = 8;
 constexpr int BASE = (1 << BASE_BITS);  // 256
