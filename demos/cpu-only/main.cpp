@@ -4,12 +4,7 @@
 #include <vector>
 
 #include "core/thread_pool.hpp"
-// #include "host_dispatcher.hpp"
-
-#include "memory_region.hpp"
-// #include "shared/structures.h"
-
-#include "structures.hpp"
+#include "shared/structures.h"
 #include "third-party/CLI11.hpp"
 #include "utils.hpp"
 
@@ -23,13 +18,28 @@ constexpr auto seed = 114514;
 // demo config
 constexpr auto n_iterations = 30;
 
-// void gen_data(const std::unique_ptr<struct pipe>& p) {
-//   std::mt19937 gen(seed);  // NOLINT(cert-msc51-cpp)
-//   std::uniform_real_distribution dis(min_coord, min_coord + range);
-//   std::generate_n(p->u_points, n, [&dis, &gen] {
-//     return glm::vec4(dis(gen), dis(gen), dis(gen), 1.0f);
-//   });
-// }
+void gen_data(const std::unique_ptr<Pipe>& p) {
+  std::mt19937 gen(seed);  // NOLINT(cert-msc51-cpp)
+  std::uniform_real_distribution dis(min_coord, min_coord + range);
+  std::generate_n(p->u_points, n, [&dis, &gen] {
+    return glm::vec4(dis(gen), dis(gen), dis(gen), 1.0f);
+  });
+}
+
+core::multi_future<void> dispatch_morton_code(core::thread_pool& pool,
+                                              int num_threads,
+                                              const std::unique_ptr<Pipe>& p) {
+  return pool.submit_blocks(
+      0,
+      p->n_input(),
+      [&](const int start, const int end) {
+        for (int i = start; i < end; ++i) {
+          p->u_morton[i] =
+              shared::xyz_to_morton32(p->u_points[i], p->min_coord, p->range);
+        }
+      },
+      num_threads);
+}
 
 int main(int argc, char** argv) {
   CLI::App app{"CPU demo of using all threads"};
@@ -55,21 +65,23 @@ int main(int argc, char** argv) {
 
   core::thread_pool pool(small_cores);
 
-  // auto p = std::make_unique<struct pipe>(n, min_coord, range, seed);
-  // gen_data(p);
+  auto p = std::make_unique<Pipe>(n, min_coord, range, seed);
+  gen_data(p);
 
-  // // print 10 points
-  // for (int i = 0; i < 10; ++i) {
-  //   std::cout << p->u_points[i].x << ' ' << p->u_points[i].y << ' '
-  //             << p->u_points[i].z << '\n';
-  // }
+  // print 10 points
+  for (int i = 0; i < 10; ++i) {
+    std::cout << p->u_points[i].x << ' ' << p->u_points[i].y << ' '
+              << p->u_points[i].z << '\n';
+  }
 
   // cpu::dispatch_morton_code(pool, 4, p).wait();
 
-  // // print 10 morton code
-  // for (int i = 0; i < 10; ++i) {
-  //   std::cout << p->u_morton[i] << '\n';
-  // }
+  dispatch_morton_code(pool, 4, p).wait();
+
+  // print 10 morton code
+  for (int i = 0; i < 10; ++i) {
+    std::cout << p->u_morton[i] << '\n';
+  }
 
   // pipe p(n, min_coord, range, seed, Backend::CPU);
 

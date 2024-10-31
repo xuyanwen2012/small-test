@@ -1,0 +1,68 @@
+#include "shared/structures.h"
+
+// Let's allocate 'capacity' instead of 'n_brt_nodes' for now
+// Because usually n_brt_nodes is 99.x% of capacity
+
+RadixTree::RadixTree(const size_t capacity) : capacity(capacity) {
+  u_prefix_n = new uint8_t[capacity];
+  u_has_leaf_left = new bool[capacity];
+  u_has_leaf_right = new bool[capacity];
+  u_left_child = new int[capacity];
+  u_parents = new int[capacity];
+}
+
+RadixTree::~RadixTree() {
+  delete[] u_prefix_n;
+  delete[] u_has_leaf_left;
+  delete[] u_has_leaf_right;
+  delete[] u_left_child;
+  delete[] u_parents;
+}
+
+Octree::Octree(const size_t capacity) : capacity(capacity) {
+  u_children = new int[capacity][8];
+  u_corner = new glm::vec4[capacity];
+  u_cell_size = new float[capacity];
+  u_child_node_mask = new int[capacity];
+  u_child_leaf_mask = new int[capacity];
+}
+
+Octree::~Octree() {
+  delete[] u_children;
+  delete[] u_corner;
+  delete[] u_cell_size;
+  delete[] u_child_node_mask;
+  delete[] u_child_leaf_mask;
+}
+
+constexpr auto educated_guess = 0.55;
+
+Pipe::Pipe(const int n,
+           const float min_coord,
+           const float range,
+           const int seed)
+    : brt(n),
+      oct(n * educated_guess),
+      n_points(n),
+      min_coord(min_coord),
+      range(range),
+      seed(seed) {
+  u_points = new glm::vec4[n];
+  u_morton = new morton_t[n];
+  u_morton_alt = new morton_t[n];
+  u_edge_counts = new int[n];
+  u_edge_offsets = new int[n];
+  // For CPU, no need to allocate the temporary storage
+}
+
+Pipe::~Pipe() {
+  delete[] u_points;
+  delete[] u_morton;
+  delete[] u_morton_alt;
+  delete[] u_edge_counts;
+  delete[] u_edge_offsets;
+}
+
+void Pipe::clearSmem() {
+  // no effect on CPU
+}

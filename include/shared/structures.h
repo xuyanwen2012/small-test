@@ -9,7 +9,7 @@
 
 // I am using only pointers because this gives me a unified front end for both
 // CPU/and GPU
-struct radix_tree {
+struct RadixTree {
   const size_t capacity;
 
   // ------------------------
@@ -27,16 +27,16 @@ struct radix_tree {
   // Constructors
   // ------------------------
 
-  radix_tree() = delete;
+  RadixTree() = delete;
 
-  explicit radix_tree(size_t n_to_allocate);
+  explicit RadixTree(size_t n_to_allocate);
 
-  radix_tree(const radix_tree&) = delete;
-  radix_tree& operator=(const radix_tree&) = delete;
-  radix_tree(radix_tree&&) = delete;
-  radix_tree& operator=(radix_tree&&) = delete;
+  RadixTree(const RadixTree&) = delete;
+  RadixTree& operator=(const RadixTree&) = delete;
+  RadixTree(RadixTree&&) = delete;
+  RadixTree& operator=(RadixTree&&) = delete;
 
-  ~radix_tree();
+  ~RadixTree();
 
   // ------------------------
   // Getter/Setters
@@ -54,7 +54,7 @@ struct radix_tree {
   }
 };
 
-struct octree {
+struct Octree {
   const size_t capacity;
 
   // ------------------------
@@ -74,16 +74,16 @@ struct octree {
   // Constructors
   // ------------------------
 
-  octree() = delete;
+  Octree() = delete;
 
-  explicit octree(size_t capacity);
+  explicit Octree(size_t capacity);
 
-  octree(const octree&) = delete;
-  octree& operator=(const octree&) = delete;
-  octree(octree&&) = delete;
-  octree& operator=(octree&&) = delete;
+  Octree(const Octree&) = delete;
+  Octree& operator=(const Octree&) = delete;
+  Octree(Octree&&) = delete;
+  Octree& operator=(Octree&&) = delete;
 
-  ~octree();
+  ~Octree();
 
   // ------------------------
   // Getter/Setters
@@ -100,7 +100,7 @@ struct octree {
   }
 };
 
-struct pipe {
+struct Pipe {
   // ------------------------
   // Essential Data (CPU/GPU shared)
   // ------------------------
@@ -111,10 +111,10 @@ struct pipe {
   glm::vec4* u_points;
   morton_t* u_morton;
   morton_t* u_morton_alt;  // also used as the unique morton
-  radix_tree brt;
+  RadixTree brt;
   int* u_edge_counts;
   int* u_edge_offsets;
-  octree oct;
+  Octree oct;
 
   // read-only
   int n_points;
@@ -149,19 +149,19 @@ struct pipe {
   // Constructors
   // ------------------------
 
-  pipe() = delete;
+  Pipe() = delete;
 
-  explicit pipe(int n_points,
+  explicit Pipe(int n_points,
                 float min_coord = 0.0f,
                 float range = 1024.0f,
                 int seed = 114514);
 
-  pipe(const pipe&) = delete;
-  pipe& operator=(const pipe&) = delete;
-  pipe(pipe&&) = delete;
-  pipe& operator=(pipe&&) = delete;
+  Pipe(const Pipe&) = delete;
+  Pipe& operator=(const Pipe&) = delete;
+  Pipe(Pipe&&) = delete;
+  Pipe& operator=(Pipe&&) = delete;
 
-  ~pipe();
+  ~Pipe();
 
   // ------------------------
   // Accessors (preffered over direct access)

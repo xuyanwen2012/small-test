@@ -104,6 +104,6 @@ end
 
 --
 
-includes("demos")
+includes("ppl")
 includes("tests")
-
+includes("demos")

@@ -1,3 +1,7 @@
+-- ---------------------------------------------------------------------
+-- Foundations
+-- ---------------------------------------------------------------------
+
 target("test-glm")
     set_kind("binary")
     add_files("foundations/test-glm.cpp")
@@ -31,3 +35,11 @@ target("test-threadpool")
     if is_plat("android") then
         on_run(run_on_android)
     end
+
+-- ---------------------------------------------------------------------
+-- Kernels
+-- ---------------------------------------------------------------------
+
+-- target("test-host-kernel")
+--     set_kind("binary")
+--     add_packages("gtest")
