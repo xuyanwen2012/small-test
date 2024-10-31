@@ -46,7 +46,6 @@ void k_binning_pass(const size_t tid,
 
   lck.unlock();
 
-  // barrier.wait();
   barrier.arrive_and_wait();
 
   if (tid == 0) {
@@ -55,7 +54,6 @@ void k_binning_pass(const size_t tid,
                      std::begin(sort.bucket));
   }
 
-  // barrier.wait();
   barrier.arrive_and_wait();
 
   lck.lock();
