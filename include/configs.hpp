@@ -77,9 +77,9 @@ inline const std::unordered_map<std::string, const PhoneSpecs> PHONE_SPECS{
          .alias = "Jetson Orin",
          .core_count = 6,
          .valid_cores = {0, 1, 2, 3, 4, 5},
-         .small_cores = {},
+         .small_cores = {0, 1, 2, 3, 4, 5},
          .mid_cores = {},
-         .big_cores = {0, 1, 2, 3, 4, 5},
+         .big_cores = {},
          .small_core_freq = 0.0,  // Unknown
          .mid_core_freq = 0.0,    // Unknown
          .big_core_freq = 0.0     // Unknown

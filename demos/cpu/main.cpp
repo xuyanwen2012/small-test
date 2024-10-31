@@ -50,7 +50,6 @@ int main(int argc, char** argv) {
   CLI::App app{"CPU Morton code computation demo"};
 
   // Command line parameters
-  // std::vector<int> small_cores;
   int num_threads;
   int problem_size;
   int iterations;
@@ -84,7 +83,7 @@ int main(int argc, char** argv) {
 
     utils::print_device_profile(phone_specs.value());
 
-    core::thread_pool pool(small_cores);
+    core::thread_pool pool(small_cores, true);
 
     auto p = std::make_shared<Pipe>(problem_size,
                                     Config::DEFAULT_MIN_COORD,

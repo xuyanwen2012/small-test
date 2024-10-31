@@ -28,6 +28,33 @@ struct multi_future {
 
 class thread_pool {
  public:
+
+  explicit thread_pool(int n_threads) : stopFlag(false) {
+    workers.reserve(n_threads);
+
+    for (int i = 0; i < n_threads; ++i) {
+      workers.emplace_back([this] {
+        while (true) {
+          std::function<void()> task;
+
+          // Lock the queue to retrieve tasks safely
+          {
+            std::unique_lock lock(queueMutex);
+            condition.wait(lock, [this] { return stopFlag || !tasks.empty(); });
+
+            if (stopFlag && tasks.empty()) return;
+
+            task = std::move(tasks.front());
+            tasks.pop();
+          }
+
+          // Execute the retrieved task outside the lock
+          task();
+        }
+      });
+    }
+  }
+
   explicit thread_pool(std::vector<int> core_ids, bool enable_pinning = false)
       : stopFlag(false) {
     workers.reserve(core_ids.size());
