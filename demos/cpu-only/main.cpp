@@ -99,19 +99,24 @@ int main(int argc, char** argv) {
         print_points(p, 5);
 
         // Warmup run
-        cpu::dispatch_morton_code(pool, num_threads, p).wait();
+        cpu::dispatch_MortonCode(pool, num_threads, p).wait();
 
         // Benchmark
         auto start = std::chrono::high_resolution_clock::now();
         
         for (int i = 0; i < iterations; ++i) {
-            cpu::dispatch_morton_code(pool, num_threads, p).wait();
+            cpu::dispatch_MortonCode(pool, num_threads, p).wait();
+            cpu::dispatch_RadixSort(pool, num_threads, p);
         }
         
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         
         print_morton_codes(p, 5);
+
+        // Verify the result
+        assert(std::is_sorted(p->u_morton, p->u_morton + problem_size));
+        std::cout << "Verification passed.\n";
 
         double avg_ms = duration.count() / 1000.0 / iterations;
         std::cout << "\nPerformance:\n"

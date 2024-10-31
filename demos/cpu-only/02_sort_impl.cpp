@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include "block.hpp"
+
 #include "core/thread_pool.hpp"
 
 constexpr int BASE_BITS = 8;
