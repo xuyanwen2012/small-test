@@ -53,7 +53,6 @@ std::optional<std::vector<int>> CPU_Pinned::big_cores_opt_to_pin;
 
 BENCHMARK_DEFINE_F(CPU_Pinned, BM_Morton)(benchmark::State& state) {
   const auto n_threads = state.range(0);
-
   core::thread_pool pinned_pool(small_cores_to_pin, true);
 
   for (auto _ : state) {
@@ -61,38 +60,131 @@ BENCHMARK_DEFINE_F(CPU_Pinned, BM_Morton)(benchmark::State& state) {
   }
 }
 
+// ----------------------------------------------------------------------------
+// Radix sort
+// ----------------------------------------------------------------------------
+
+BENCHMARK_DEFINE_F(CPU_Pinned, BM_RadixSort)(benchmark::State& state) {
+  const auto n_threads = state.range(0);
+  core::thread_pool pinned_pool(small_cores_to_pin, true);
+
+  for (auto _ : state) {
+    cpu::dispatch_RadixSort(pinned_pool, n_threads, p);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Remove duplicates
+// ----------------------------------------------------------------------------
+
+BENCHMARK_DEFINE_F(CPU_Pinned, BM_RemoveDuplicates)(benchmark::State& state) {
+  const auto n_threads = state.range(0);
+  core::thread_pool pinned_pool(small_cores_to_pin, true);
+
+  for (auto _ : state) {
+    cpu::dispatch_RemoveDuplicates(pinned_pool, n_threads, p);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Build radix tree
+// ----------------------------------------------------------------------------
+
+BENCHMARK_DEFINE_F(CPU_Pinned, BM_BuildRadixTree)(benchmark::State& state) {
+  const auto n_threads = state.range(0);
+  core::thread_pool pinned_pool(small_cores_to_pin, true);
+
+  for (auto _ : state) {
+    cpu::dispatch_BuildRadixTree(pinned_pool, n_threads, p);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Edge count
+// ----------------------------------------------------------------------------
+
+BENCHMARK_DEFINE_F(CPU_Pinned, BM_EdgeCount)(benchmark::State& state) {
+  const auto n_threads = state.range(0);
+  core::thread_pool pinned_pool(small_cores_to_pin, true);
+
+  for (auto _ : state) {
+    cpu::dispatch_EdgeCount(pinned_pool, n_threads, p);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Edge offset
+// ----------------------------------------------------------------------------
+
+BENCHMARK_DEFINE_F(CPU_Pinned, BM_EdgeOffset)(benchmark::State& state) {
+  const auto n_threads = state.range(0);
+  core::thread_pool pinned_pool(small_cores_to_pin, true);
+
+  for (auto _ : state) {
+    cpu::dispatch_EdgeOffset(pinned_pool, n_threads, p);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Build octree
+// ----------------------------------------------------------------------------
+
+BENCHMARK_DEFINE_F(CPU_Pinned, BM_BuildOctree)(benchmark::State& state) {
+  const auto n_threads = state.range(0);
+  core::thread_pool pinned_pool(small_cores_to_pin, true);
+
+  for (auto _ : state) {
+    cpu::dispatch_BuildOctree(pinned_pool, n_threads, p);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Register benchmarks
+// ----------------------------------------------------------------------------
+
 void RegisterBenchmarkWithRange(int n_small_cores,
                                 int n_medium_cores,
                                 int n_big_cores) {
-  // small cores
-  for (int i = 1; i <= n_small_cores; ++i) {
-    ::benchmark ::internal ::RegisterBenchmarkInternal(
-        new CPU_Pinned_BM_Morton_Benchmark())
-        ->Arg(i)
-        ->Name("CPU_Pinned/BM_Morton/Small")
-        ->Unit(benchmark::kMillisecond)
-        ->Iterations(Config::DEFAULT_ITERATIONS);
+// Helper macro to reduce repetition
+#define REGISTER_BENCHMARK(NAME, CORE_TYPE, N_CORES)  \
+  for (int i = 1; i <= N_CORES; ++i) {                \
+    ::benchmark::internal::RegisterBenchmarkInternal( \
+        new CPU_Pinned_##NAME##_Benchmark())          \
+        ->Arg(i)                                      \
+        ->Name("CPU_Pinned/" #NAME "/" #CORE_TYPE)    \
+        ->Unit(benchmark::kMillisecond)               \
+        ->Iterations(Config::DEFAULT_ITERATIONS);     \
   }
 
-  // medium cores
-  for (int i = 1; i <= n_medium_cores; ++i) {
-    ::benchmark ::internal ::RegisterBenchmarkInternal(
-        new CPU_Pinned_BM_Morton_Benchmark())
-        ->Arg(i)
-        ->Name("CPU_Pinned/BM_Morton/Medium")
-        ->Unit(benchmark::kMillisecond)
-        ->Iterations(Config::DEFAULT_ITERATIONS);
-  }
+  REGISTER_BENCHMARK(BM_Morton, Small, n_small_cores);
+  REGISTER_BENCHMARK(BM_Morton, Medium, n_medium_cores);
+  REGISTER_BENCHMARK(BM_Morton, Big, n_big_cores);
 
-  // big cores
-  for (int i = 1; i <= n_big_cores; ++i) {
-    ::benchmark ::internal ::RegisterBenchmarkInternal(
-        new CPU_Pinned_BM_Morton_Benchmark())
-        ->Arg(i)
-        ->Name("CPU_Pinned/BM_Morton/Big")
-        ->Unit(benchmark::kMillisecond)
-        ->Iterations(Config::DEFAULT_ITERATIONS);
-  }
+  REGISTER_BENCHMARK(BM_RadixSort, Small, n_small_cores);
+  REGISTER_BENCHMARK(BM_RadixSort, Medium, n_medium_cores);
+  REGISTER_BENCHMARK(BM_RadixSort, Big, n_big_cores);
+
+  REGISTER_BENCHMARK(BM_RemoveDuplicates, Small, n_small_cores);
+  REGISTER_BENCHMARK(BM_RemoveDuplicates, Medium, n_medium_cores);
+  REGISTER_BENCHMARK(BM_RemoveDuplicates, Big, n_big_cores);
+
+  REGISTER_BENCHMARK(BM_BuildRadixTree, Small, n_small_cores);
+  REGISTER_BENCHMARK(BM_BuildRadixTree, Medium, n_medium_cores);
+  REGISTER_BENCHMARK(BM_BuildRadixTree, Big, n_big_cores);
+
+  REGISTER_BENCHMARK(BM_EdgeCount, Small, n_small_cores);
+  REGISTER_BENCHMARK(BM_EdgeCount, Medium, n_medium_cores);
+  REGISTER_BENCHMARK(BM_EdgeCount, Big, n_big_cores);
+
+  REGISTER_BENCHMARK(BM_EdgeOffset, Small, n_small_cores);
+  REGISTER_BENCHMARK(BM_EdgeOffset, Medium, n_medium_cores);
+  REGISTER_BENCHMARK(BM_EdgeOffset, Big, n_big_cores);
+
+  REGISTER_BENCHMARK(BM_BuildOctree, Small, n_small_cores);
+  REGISTER_BENCHMARK(BM_BuildOctree, Medium, n_medium_cores);
+  REGISTER_BENCHMARK(BM_BuildOctree, Big, n_big_cores);
+
+#undef REGISTER_BENCHMARK
 }
 
 // ----------------------------------------------------------------------------

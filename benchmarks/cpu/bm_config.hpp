@@ -13,7 +13,7 @@ struct Config {
   static constexpr float DEFAULT_MIN_COORD = 0.0f;
   static constexpr float DEFAULT_RANGE = 1024.0f;
   static constexpr unsigned DEFAULT_SEED = 114514;
-  static constexpr int DEFAULT_ITERATIONS = 30;
+  static constexpr int DEFAULT_ITERATIONS = 300;
 };
 
 inline void gen_data(const std::shared_ptr<Pipe>& p, unsigned seed) {
