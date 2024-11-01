@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "configs.hpp"
-#include "core/thread_pool.hpp"
+// #include "core/thread_pool.hpp"
 #include "host/host_dispatcher.hpp"
 #include "shared/structures.h"
 #include "third-party/CLI11.hpp"
@@ -83,7 +83,10 @@ int main(int argc, char** argv) {
 
     utils::print_device_profile(phone_specs.value());
 
-    core::thread_pool pool(small_cores, true);
+    // // core::thread_pool pool(small_cores, true);
+    // BS::thread_pool pool(small_cores.size(), []() {
+    //   utils::set_cpu_affinity(0);
+    // });
 
     auto p = std::make_shared<Pipe>(problem_size,
                                     Config::DEFAULT_MIN_COORD,
