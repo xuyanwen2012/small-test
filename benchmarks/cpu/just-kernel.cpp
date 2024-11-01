@@ -65,15 +65,15 @@ void RegisterBenchmarksWithPool(std::span<const int> available_cores_to_pin) {
   for (int core_id : available_cores_to_pin) {
     auto mc_benchmark = [core_id, p](benchmark::State& state) {
       core::thread_pool pool(std::vector<int>{core_id}, true);
-      
-      for (auto _ : state) {
 
+      for (auto _ : state) {
         pool.submit_task([p] {
-          for (int i = 0; i < p->n_input(); ++i) {
-            p->u_morton[i] =
-                shared::xyz_to_morton32(p->u_points[i], p->min_coord, p->range);
-          }
-        }).wait();
+              for (int i = 0; i < p->n_input(); ++i) {
+                p->u_morton[i] = shared::xyz_to_morton32(
+                    p->u_points[i], p->min_coord, p->range);
+              }
+            })
+            .wait();
       }
     };
     benchmark::RegisterBenchmark(

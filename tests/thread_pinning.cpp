@@ -26,7 +26,6 @@ class ThreadPinningTest : public ::testing::Test {
     if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) == -1) {
       throw std::runtime_error("Failed to reset CPU affinity to all cores");
     }
-
   }
 };
 
