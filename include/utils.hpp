@@ -28,27 +28,6 @@ namespace utils {
 using namespace std::chrono_literals;
 
 /**
- * @brief Performs a busy-wait for the specified duration with high precision
- *
- * @details This function implements a busy-wait loop that provides
- * high-precision timing. On Android platforms, it includes a yield operation to
- * prevent excessive CPU usage while maintaining timing accuracy.
- *
- * @tparam Rep The arithmetic type representing the number of ticks
- * @tparam Period The ratio type representing the tick period
- * @param duration The time duration to wait
- */
-template <typename Rep, typename Period>
-inline void busy_wait_for(std::chrono::duration<Rep, Period> duration) {
-  const auto start = std::chrono::steady_clock::now();
-  while (std::chrono::steady_clock::now() - start < duration) {
-#if defined(__ANDROID__)
-    sched_yield();
-#endif
-  }
-}
-
-/**
  * @brief Retrieves a list of CPU cores available to the current process
  *
  * @details Uses the process CPU affinity mask to determine which cores are

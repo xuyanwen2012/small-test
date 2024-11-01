@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include <random>
-#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -83,7 +82,7 @@ void RegisterMonteCarloPiBenchmarks(
   for (int core_id : available_cores_to_pin) {
     auto mc_benchmark = [core_id](benchmark::State& state) {
       pin_thread_to_core(core_id);
-      
+
       int points = state.range(0);
       for (auto _ : state) {
         monte_carlo_pi(points);
