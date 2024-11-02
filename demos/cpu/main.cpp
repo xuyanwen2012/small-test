@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
 
     utils::print_device_profile(phone_specs.value());
 
-    // // core::thread_pool pool(small_cores, true);
+    core::thread_pool pool(small_cores, true);
     // BS::thread_pool pool(small_cores.size(), []() {
     //   utils::set_cpu_affinity(0);
     // });

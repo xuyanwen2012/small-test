@@ -41,7 +41,7 @@ inline const std::unordered_map<std::string, const PhoneSpecs> PHONE_SPECS{
          .big_core_freq = 0.0     // Unknown
      }},
     {"RFCT80DAADN",
-     {.alias = "Samsung-old",
+     {.alias = "Samsung-new",
       .core_count = 8,
       .valid_cores = {0, 1, 2, 3, 4, 5, 6, 7},  // Updated based on output
       .small_cores = {0, 1, 2, 3},
@@ -63,7 +63,7 @@ inline const std::unordered_map<std::string, const PhoneSpecs> PHONE_SPECS{
          .big_core_freq = 0.0     // Unknown
      }},
     {"ce0717178d7758b00b7e",
-     {.alias = "Samsung-new",
+     {.alias = "Samsung-old",
       .core_count = 8,
       .valid_cores = {0, 1, 2, 3, 4, 5},  // Updated based on output
       .small_cores = {0, 1, 2, 3},

@@ -1,0 +1,9 @@
+Core Type,Threads,Time (ms)
+Small,1,4.08
+Small,2,1.79
+Small,3,1.22
+Small,4,0.995
+Medium,1,6.45
+Medium,2,0.96
+Big,1,2.71
+Big,2,1.24
