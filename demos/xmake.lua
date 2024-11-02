@@ -18,3 +18,12 @@ target("demo-cpu")
         on_run(run_on_android)
     end
 target_end()
+
+target("demo-vulkan")
+    set_kind("binary")
+    add_files("vulkan/*.cpp")
+    add_includedirs("$(projectdir)/include")
+    add_packages("glm", "volk")
+    add_deps("ppl-vulkan")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()

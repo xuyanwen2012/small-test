@@ -1,0 +1,30 @@
+#version 450
+#extension GL_KHR_shader_subgroup_basic : enable
+#extension GL_KHR_shader_subgroup_ballot : enable
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+#extension GL_KHR_shader_subgroup_vote : enable
+
+layout(set = 1, binding = 0) buffer Contributes { uint contributes[]; };
+
+layout(set = 1, binding = 1) buffer Keys { uint keys[]; };
+
+layout(push_constant) uniform Constants { int n; };
+
+layout(local_size_x = 256) in;
+
+void findDups(uint block_id) {
+  uint idx = block_id * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
+  if (idx > 0 && idx < n) {
+    contributes[idx] = (keys[idx] != keys[idx - 1]) ? 1 : 0;
+  }
+
+  if (idx == 0) contributes[idx] = 0;
+}
+void main() {
+  uint logical_blocks = uint(ceil(float(n) / float(gl_WorkGroupSize.x)));
+  for (uint zheyuan_block_id = gl_WorkGroupID.x;
+       zheyuan_block_id < logical_blocks;
+       zheyuan_block_id += gl_NumWorkGroups.x) {
+    findDups(zheyuan_block_id);
+  }
+}

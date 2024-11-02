@@ -29,17 +29,15 @@ inline const std::unordered_map<std::string, const PhoneSpecs> PHONE_SPECS{
       .mid_core_freq = 2.348,
       .big_core_freq = 2.85}},
     {"9b034f1b",
-     {
-         .alias = "OnePlus",
-         .core_count = 8,
-         .valid_cores = {0, 1, 2, 5},
-         .small_cores = {0, 1, 2},
-         .mid_cores = {3, 4, 5, 6},
-         .big_cores = {7},
-         .small_core_freq = 0.0,  // Unknown
-         .mid_core_freq = 0.0,    // Unknown
-         .big_core_freq = 0.0     // Unknown
-     }},
+     {.alias = "OnePlus",
+      .core_count = 8,
+      .valid_cores = {0, 1, 2, 3, 4, 5},
+      .small_cores = {0, 1, 2},
+      .mid_cores = {3, 4, 5, 6},
+      .big_cores = {7},
+      .small_core_freq = 2.02,
+      .mid_core_freq = 2.80,
+      .big_core_freq = 3.19}},
     {"RFCT80DAADN",
      {.alias = "Samsung-new",
       .core_count = 8,
@@ -65,13 +63,13 @@ inline const std::unordered_map<std::string, const PhoneSpecs> PHONE_SPECS{
     {"ce0717178d7758b00b7e",
      {.alias = "Samsung-old",
       .core_count = 8,
-      .valid_cores = {0, 1, 2, 3, 4, 5},  // Updated based on output
+      .valid_cores = {0, 1, 2, 3, 4, 6},
       .small_cores = {0, 1, 2, 3},
       .mid_cores = {},
       .big_cores = {4, 5, 6, 7},
-      .small_core_freq = 1.9008,
-      .mid_core_freq = 0.0,  // No mid cores
-      .big_core_freq = 2.3616}},
+      .small_core_freq = 1.90,
+      .mid_core_freq = 0.0,
+      .big_core_freq = 2.36}},
     {"jetson",
      {
          .alias = "Jetson Orin",
