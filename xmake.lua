@@ -35,7 +35,7 @@ add_requires("benchmark 1.9.*", {alias = "benchmark"})
 add_requires("vulkan-headers", "volk")
 
 local ANDROID_CONFIG = {
-    ignored_devices = {"ZY22FLDDK7", "ce0717178d7758b00b7e"},
+    ignored_devices = {"ZY22FLDDK7", "9b034f1b"},
     remote_base_path = "/data/local/tmp"  -- Base directory for all executables
 }
 
@@ -89,7 +89,8 @@ function run_on_android(target)
         -- Execute commands
         for _, cmd in ipairs(adb_commands) do
             if os.execv("adb", cmd) ~= 0 then
-                raise("Failed to execute adb command")
+                -- raise("Failed to execute adb command")
+                print(string.format("Warning: Failed to execute adb command on device %s", device_id))
             end
         end
         
@@ -98,7 +99,8 @@ function run_on_android(target)
 
         table.join2(run_command, args, {"--device=" .. device_id})
         if os.execv("adb", run_command) ~= 0 then
-            raise(string.format("Failed to run %s", target_name))
+            -- raise(string.format("Failed to run %s", target_name))
+            print(string.format("Warning: Failed to run %s on device %s", target_name, device_id))
         end
 
         print()

@@ -234,8 +234,15 @@ inline std::vector<int> get_valid_cores(std::span<const int> cores) {
   const auto available_cores = get_available_cores();
   std::vector<int> result;
 
-  std::ranges::set_intersection(
-      cores, available_cores, std::back_inserter(result));
+  // std::ranges::set_intersection(
+  //     cores, available_cores, std::back_inserter(result));
+
+  for (const auto &core : cores) {
+    if (std::ranges::find(available_cores, core) != available_cores.end()) {
+      result.push_back(core);
+    }
+  }
+
   return result;
 }
 

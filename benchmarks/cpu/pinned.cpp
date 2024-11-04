@@ -2,7 +2,6 @@
 
 #include <glm/glm.hpp>
 #include <memory>
-#include <random>
 
 #include "bm_config.hpp"
 #include "configs.hpp"
@@ -181,6 +180,19 @@ int main(int argc, char** argv) {
   CPU_Pinned::small_cores_to_pin = valid_small_cores;
   CPU_Pinned::medium_cores_to_pin = valid_medium_cores;
   CPU_Pinned::big_cores_opt_to_pin = valid_big_cores;
+
+  // print each valid cores
+  std::cout << "[DEBUG] Valid small cores: ";
+  std::ranges::copy(valid_small_cores, std::ostream_iterator<int>(std::cout, " "));
+  std::cout << std::endl;
+
+  std::cout << "[DEBUG] Valid medium cores: ";
+  std::ranges::copy(valid_medium_cores, std::ostream_iterator<int>(std::cout, " "));
+  std::cout << std::endl;
+
+  std::cout << "[DEBUG] Valid big cores: ";
+  std::ranges::copy(valid_big_cores, std::ostream_iterator<int>(std::cout, " "));
+  std::cout << std::endl;
 
   RegisterBenchmarkWithRange(
       small_cores.size(), valid_medium_cores.size(), valid_big_cores.size());
