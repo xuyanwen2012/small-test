@@ -35,7 +35,7 @@ add_requires("benchmark 1.9.*", {alias = "benchmark"})
 add_requires("vulkan-headers", "volk")
 
 local ANDROID_CONFIG = {
-    ignored_devices = {"ZY22FLDDK7"},
+    ignored_devices = {"ZY22FLDDK7", "ce0717178d7758b00b7e"},
     remote_base_path = "/data/local/tmp"  -- Base directory for all executables
 }
 

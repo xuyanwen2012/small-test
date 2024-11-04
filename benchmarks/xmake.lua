@@ -23,7 +23,6 @@ target("bench-cpu-pinned-bs")
     add_deps("ppl")
     if is_plat("android") then on_run(run_on_android) end
 
-
 target("bench-micro")
     set_kind("binary")
     add_includedirs("$(projectdir)/include")
@@ -31,10 +30,10 @@ target("bench-micro")
     add_packages("benchmark")
     if is_plat("android") then on_run(run_on_android) end
 
-target("bench-cpu-just-kernel")
-    set_kind("binary")
-    add_includedirs("$(projectdir)/include")
-    add_files("cpu/just-kernel.cpp")
-    add_packages("benchmark", "glm")
-    add_deps("ppl")
-    if is_plat("android") then on_run(run_on_android) end
+-- target("bench-cpu-just-kernel")
+--     set_kind("binary")
+--     add_includedirs("$(projectdir)/include")
+--     add_files("cpu/just-kernel.cpp")
+--     add_packages("benchmark", "glm")
+--     add_deps("ppl")
+--     if is_plat("android") then on_run(run_on_android) end
