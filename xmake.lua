@@ -33,6 +33,10 @@ add_requires("gtest 1.15.*", {alias = "gtest"})
 add_requires("benchmark 1.9.*", {alias = "benchmark"})
 
 add_requires("vulkan-headers", "volk")
+add_requires("spdlog")
+
+-- add_requires("vk-bootstrap")
+add_requires("vulkan-validationlayers")
 
 local ANDROID_CONFIG = {
     ignored_devices = {"ZY22FLDDK7", "9b034f1b"},
@@ -43,7 +47,7 @@ local ANDROID_CONFIG = {
 function run_on_android(target)
     local exec_path = target:targetfile()
     local target_name = target:name()
-    local remote_path = ANDROID_CONFIG.remote_base_path .. "/" .. target_name
+    local remote_path = ANDROID_CONFIG.remote_base_path  -- .. "/" .. target_name
 
     if not os.isfile(exec_path) then
         raise("Executable not found at: " .. exec_path)
@@ -82,20 +86,27 @@ function run_on_android(target)
         
         -- Deploy and execute
         local adb_commands = {
-            {"-s", device_id, "push", exec_path, remote_path},
-            {"-s", device_id, "shell", "chmod", "+x", remote_path},
+            {"-s", device_id, "push", exec_path, remote_path .. "/" .. target_name},
+            {"-s", device_id, "shell", "chmod", "+x", remote_path .. "/" .. target_name},
         }
+
+        -- Copy shaders
+        local shader_dir = "./ppl/vulkan/shaders/compiled_shaders"
+        for _, file in ipairs(os.files(shader_dir .. "/*.spv")) do
+            table.insert(adb_commands, {"-s", device_id, "push", file, remote_path})
+        end
         
-        -- Execute commands
+        -- -- -- Execute commands
+
         for _, cmd in ipairs(adb_commands) do
             if os.execv("adb", cmd) ~= 0 then
                 -- raise("Failed to execute adb command")
                 print(string.format("Warning: Failed to execute adb command on device %s", device_id))
             end
         end
-        
+
         -- Run the binary with arguments
-        local run_command = {"-s", device_id, "shell", remote_path}
+        local run_command = {"-s", device_id, "shell", remote_path .. "/" .. target_name}
 
         table.join2(run_command, args, {"--device=" .. device_id})
         if os.execv("adb", run_command) ~= 0 then

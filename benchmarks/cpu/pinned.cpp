@@ -142,6 +142,7 @@ int main(int argc, char** argv) {
 
   std::string device;
   app.add_option("--device", device, "Device ID")->default_val("jetson");
+  app.allow_extras();
   CLI11_PARSE(app, argc, argv);
 
   auto phone_specs = get_phone_specs(device);
@@ -183,15 +184,18 @@ int main(int argc, char** argv) {
 
   // print each valid cores
   std::cout << "[DEBUG] Valid small cores: ";
-  std::ranges::copy(valid_small_cores, std::ostream_iterator<int>(std::cout, " "));
+  std::ranges::copy(valid_small_cores,
+                    std::ostream_iterator<int>(std::cout, " "));
   std::cout << std::endl;
 
   std::cout << "[DEBUG] Valid medium cores: ";
-  std::ranges::copy(valid_medium_cores, std::ostream_iterator<int>(std::cout, " "));
+  std::ranges::copy(valid_medium_cores,
+                    std::ostream_iterator<int>(std::cout, " "));
   std::cout << std::endl;
 
   std::cout << "[DEBUG] Valid big cores: ";
-  std::ranges::copy(valid_big_cores, std::ostream_iterator<int>(std::cout, " "));
+  std::ranges::copy(valid_big_cores,
+                    std::ostream_iterator<int>(std::cout, " "));
   std::cout << std::endl;
 
   RegisterBenchmarkWithRange(

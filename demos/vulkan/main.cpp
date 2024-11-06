@@ -1,35 +1,36 @@
+#define VK_NO_PROTOTYPES
+#include <cstring>
 #include <iostream>
+#include <vector>
 
-#include "vulkan/app_params.hpp"
-#include "vulkan/naive_pipe.hpp"
+#include "volk.h"
 
-#define BUFFER_ELEMENTS 1920 * 1080
-#define MAX_BLOCKS 128
-#define ITERATIONS 1
+bool checkValidationLayerSupport() {
+  uint32_t layerCount;
+  vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+  std::vector<VkLayerProperties> availableLayers(layerCount);
+  vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+  const char* validationLayerName = "VK_LAYER_KHRONOS_validation";
+  for (const auto& layer : availableLayers) {
+    if (strcmp(layer.layerName, validationLayerName) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
 
 int main() {
   if (volkInitialize() != VK_SUCCESS) {
-    std::cerr << "Failed to initialize volk!" << std::endl;
-    return EXIT_FAILURE;
+    std::cerr << "Failed to initialize Volk.\n";
+    return -1;
   }
-  const auto n_blocks = 1;
 
-  AppParams app_params;
-  app_params.n = BUFFER_ELEMENTS;
-  app_params.min_coord = 0.0f;
-  app_params.max_coord = 1.0f;
-  app_params.seed = 114514;
-  app_params.n_threads = 4;
-  app_params.n_blocks = n_blocks;
-
-  Pipe pipe = Pipe(app_params);
-  pipe.allocate();
-
-  pipe.init(n_blocks, 0);
-
-  pipe.morton(n_blocks, 0);
-
-  std::cout << "done" << std::endl;
-
+  if (checkValidationLayerSupport()) {
+    std::cout << "Validation layer is available.\n";
+  } else {
+    std::cout << "Validation layer is not available.\n";
+  }
   return 0;
 }
