@@ -43,27 +43,8 @@ add_requires("vulkan-headers")
 target("demo-yanwen-vulkan")
     set_kind("binary")
     add_files("yanwen-vulkan/*.cpp")
+    add_headerfiles("yanwen-vulkan/*.hpp")
     add_includedirs("$(projectdir)/include")
     add_packages("glm", "spdlog", "volk", "vulkan-validationlayers")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
-
--- target("demo-vulkan-hpp")
---     set_kind("binary")
---     add_files("vulkan-hpp/*.cpp")
---     add_packages("spdlog", "vulkansdk")
---     -- add '-lvulkan' to link flags
---     add_ldflags("-lvulkan")
---     -- add_cxxflags("-lvulkan")
---     if is_plat("android") then on_run(run_on_android) end
--- target_end()
-
--- add_requires("vk-bootstrap")
--- vk-bootstrap
-
--- target("demo-vkb")
---     set_kind("binary")
---     add_files("vulkan-vkb/*.cpp")
---     add_packages("spdlog", "vk-bootstrap")
---     if is_plat("android") then on_run(run_on_android) end
--- target_end()

@@ -39,7 +39,7 @@ add_requires("spdlog")
 add_requires("vulkan-validationlayers")
 
 local ANDROID_CONFIG = {
-    ignored_devices = {"ZY22FLDDK7", "9b034f1b"},
+    ignored_devices = {"ZY22FLDDK7"},
     remote_base_path = "/data/local/tmp"  -- Base directory for all executables
 }
 

@@ -1,3 +1,5 @@
+#include <spdlog/spdlog.h>
+
 #include "base_engine.hpp"
 #include "third-party/CLI11.hpp"
 
@@ -21,7 +23,7 @@ int main(int argc, char** argv) {
   }
 
   try {
-    BaseEngine engine(debug);
+    BaseEngine engine(true);
     // Your application code here
   } catch (const std::exception& e) {
     spdlog::error("Error: {}", e.what());
