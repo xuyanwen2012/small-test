@@ -1,7 +1,8 @@
 #include "base_engine.hpp"
 
-#include <vector>
 #include <spdlog/spdlog.h>
+
+#include <vector>
 
 #include "vma_usage.hpp"
 
@@ -9,6 +10,37 @@
 
 // a single global allocator for the engine
 VmaAllocator g_allocator = VK_NULL_HANDLE;
+
+bool checkValidationLayerSupport(
+    const std::vector<const char*>& validationLayers) {
+  // Get the count of available layers
+  uint32_t layerCount;
+  vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+  // Get the list of layers
+  std::vector<VkLayerProperties> availableLayers(layerCount);
+  vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+  // Check each requested validation layer against available layers
+  for (const char* layerName : validationLayers) {
+    bool layerFound = false;
+
+    for (const auto& layerProperties : availableLayers) {
+      if (strcmp(layerName, layerProperties.layerName) == 0) {
+        layerFound = true;
+        break;
+      }
+    }
+
+    if (!layerFound) {
+      spdlog::warn("Validation layer not found: {}", layerName);
+      return false;
+    }
+  }
+
+  spdlog::info("All requested validation layers are available.");
+  return true;
+}
 
 void BaseEngine::destroy() {
   spdlog::info("BaseEngine::destroy");
@@ -36,10 +68,19 @@ void BaseEngine::initialize_device() {
       .apiVersion = VK_API_VERSION_1_3,
   };
 
-  const VkInstanceCreateInfo createInfo{
+  const std::vector<const char*> validationLayers = {
+      "VK_LAYER_KHRONOS_validation"};
+
+  VkInstanceCreateInfo createInfo{
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pApplicationInfo = &appInfo,
   };
+
+  if (checkValidationLayerSupport(validationLayers)) {
+    createInfo.enabledLayerCount =
+        static_cast<uint32_t>(validationLayers.size());
+    createInfo.ppEnabledLayerNames = validationLayers.data();
+  }
 
   if (vkCreateInstance(&createInfo, nullptr, &instance_) != VK_SUCCESS) {
     spdlog::error("Failed to create Vulkan instance");
@@ -110,7 +151,7 @@ void BaseEngine::vma_initialization() {
       .instance = instance_,
       .vulkanApiVersion = VK_API_VERSION_1_3,
   };
-  
+
   if (vmaCreateAllocator(&allocatorCreateInfo, &g_allocator) != VK_SUCCESS) {
     spdlog::error("Failed to create VMA allocator");
     return;
