@@ -1,6 +1,6 @@
 #include <spdlog/spdlog.h>
 
-#include "base_engine.hpp"
+#include "engine.hpp"
 #include "third-party/CLI11.hpp"
 
 int main(int argc, char** argv) {
@@ -23,7 +23,13 @@ int main(int argc, char** argv) {
   }
 
   try {
-    BaseEngine engine;
+    Engine engine{};
+
+    auto a = engine.get_device_ptr();
+    spdlog::debug("Creating buffer");
+    Buffer buffer(a, 1024);
+    spdlog::debug("Buffer created");
+
   } catch (const std::exception& e) {
     spdlog::error("Error: {}", e.what());
     return EXIT_FAILURE;

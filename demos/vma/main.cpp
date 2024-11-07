@@ -1,7 +1,10 @@
+#define VK_NO_PROTOTYPES
+#include <volk.h>
+
 #include <iostream>
 #include <vector>
 
-#include <volk.h>
+#define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 
 int main() {
@@ -55,7 +58,7 @@ int main() {
   float queuePriority = 1.0f;
   VkDeviceQueueCreateInfo queueCreateInfo = {};
   queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-  queueCreateInfo.queueFamilyIndex = 0; // assume
+  queueCreateInfo.queueFamilyIndex = 0;  // assume
   queueCreateInfo.queueCount = 1;
   queueCreateInfo.pQueuePriorities = &queuePriority;
 
@@ -95,9 +98,55 @@ int main() {
 
   std::cout << "VMA allocator created successfully!" << std::endl;
 
+  // ---------------------------------------------------------------------------
+  VmaAllocation allocation_ = VK_NULL_HANDLE;
+  VkDeviceMemory memory_ = VK_NULL_HANDLE;
+  const VkDeviceSize size = 1024;
+  VkBuffer buffer = VK_NULL_HANDLE;
+
+  const VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  const VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
+  const VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+  const VkBufferCreateInfo buffer_create_info{
+      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      .size = size,
+      .usage = usage,
+  };
+
+  const VmaAllocationCreateInfo memory_info{
+      .flags = flags,
+      .usage = memory_usage,
+  };
+
+  VmaAllocationInfo allocation_info{};
+
+  if (const auto result = vmaCreateBuffer(
+          allocator,
+          reinterpret_cast<const VkBufferCreateInfo *>(&buffer_create_info),
+          &memory_info,
+          // reinterpret_cast<VkBuffer *>(&buffer),
+          &buffer,
+          &allocation_,
+          &allocation_info);
+      result != VK_SUCCESS) {
+    throw std::runtime_error("Cannot create HPPBuffer");
+  }
+
+  // log the allocation info
+  std::cout << "Buffer::Buffer" << std::endl;
+  std::cout << "\tsize: " << allocation_info.size << std::endl;
+  std::cout << "\toffset: " << allocation_info.offset << std::endl;
+  std::cout << "\tmemoryType: " << allocation_info.memoryType << std::endl;
+  std::cout << "\tmappedData: " << allocation_info.pMappedData << std::endl;
+
+  // ---------------------------------------------------------------------------
+
   // Cleanup
+  vmaDestroyBuffer(allocator, buffer, allocation_);
+  vmaDestroyAllocator(allocator);
+  
   vkDestroyDevice(device, nullptr);
   vkDestroyInstance(instance, nullptr);
-  vmaDestroyAllocator(allocator);
   return 0;
 }

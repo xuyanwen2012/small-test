@@ -38,8 +38,6 @@ target("demo-zheyuan-vulkan")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
 
-
-
 target("demo-yanwen-vulkan")
     set_kind("binary")
     add_files("yanwen-vulkan/*.cpp")
@@ -49,13 +47,19 @@ target("demo-yanwen-vulkan")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
 
-
-
 target("demo-vma-class")
     set_kind("binary")
     add_files("vma-class/*.cpp")
     add_headerfiles("vma-class/*.hpp")
     add_includedirs("$(projectdir)/include")
     add_packages("volk","vulkan-memory-allocator", "spdlog")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()
+
+target("demo-vma")
+    set_kind("binary")
+    add_files("vma/main.cpp")
+    add_includedirs("$(projectdir)/include")
+    add_packages("volk", "vulkan-memory-allocator", "spdlog")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
