@@ -28,15 +28,19 @@ if is_plat("android") then
     package_end()
 end
 
+-- Application requires
 add_requires("glm 1.0.*", {alias = "glm"})
+add_requires("spdlog")
+
+-- Benchmark and testing requires
 add_requires("gtest 1.15.*", {alias = "gtest"})
 add_requires("benchmark 1.9.*", {alias = "benchmark"})
 
-add_requires("vulkan-headers", "volk")
-add_requires("spdlog")
 
--- add_requires("vk-bootstrap")
+-- Vulkan requires
+add_requires("vulkan-headers", "volk")
 add_requires("vulkan-validationlayers")
+add_requires("vulkan-memory-allocator")
 
 local ANDROID_CONFIG = {
     ignored_devices = {"ZY22FLDDK7"},

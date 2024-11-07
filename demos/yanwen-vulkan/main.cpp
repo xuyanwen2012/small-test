@@ -25,6 +25,8 @@ int main(int argc, char** argv) {
   try {
     BaseEngine engine(true);
     // Your application code here
+
+    
   } catch (const std::exception& e) {
     spdlog::error("Error: {}", e.what());
     return EXIT_FAILURE;

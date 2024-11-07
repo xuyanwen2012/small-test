@@ -2,8 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include <stdexcept>
-#include <vector>
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
 
 BaseEngine::BaseEngine(bool enable_validation)
     : enable_validation_(enable_validation) {
@@ -15,11 +15,16 @@ BaseEngine::BaseEngine(bool enable_validation)
   }
 
   initialize_device();
+  vma_initialization();
 }
 
 void BaseEngine::destroy() {
   spdlog::debug("BaseEngine::destroy");
 
+  if (allocator_ != VK_NULL_HANDLE) {
+    vmaDestroyAllocator(allocator_);
+    allocator_ = VK_NULL_HANDLE;
+  }
   if (device_ != VK_NULL_HANDLE) {
     vkDestroyDevice(device_, nullptr);
     device_ = VK_NULL_HANDLE;
@@ -87,37 +92,16 @@ void BaseEngine::initialize_device() {
   std::vector<VkPhysicalDevice> devices(device_count);
   vkEnumeratePhysicalDevices(instance_, &device_count, devices.data());
 
-  // Find a suitable GPU with compute capabilities
-  VkPhysicalDevice physical_device = VK_NULL_HANDLE;
+  // debug print all physical devices
   for (const auto& device : devices) {
     VkPhysicalDeviceProperties device_properties;
     vkGetPhysicalDeviceProperties(device, &device_properties);
-
-    // Get queue family properties
-    uint32_t queue_family_count = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(
-        device, &queue_family_count, nullptr);
-    std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
-    vkGetPhysicalDeviceQueueFamilyProperties(
-        device, &queue_family_count, queue_families.data());
-
-    // Check if device has compute queue
-    bool has_compute = false;
-    for (const auto& queue_family : queue_families) {
-      if (queue_family.queueFlags & VK_QUEUE_COMPUTE_BIT) {
-        has_compute = true;
-        break;
-      }
-    }
-
-    // Select integrated GPU if it has compute capabilities
-    if (device_properties.deviceType ==
-            VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU &&
-        has_compute) {
-      physical_device = device;
-      break;
-    }
+    spdlog::info("Physical device: {}", device_properties.deviceName);
   }
+
+  // just pick the first physical device, on android, there is only one physical
+  // device
+  VkPhysicalDevice physical_device = devices[0];
 
   if (physical_device == VK_NULL_HANDLE) {
     throw std::runtime_error(
@@ -125,8 +109,7 @@ void BaseEngine::initialize_device() {
   }
 
   // Create logical device
-  uint32_t queue_family_index =
-      0;  // Assume first queue family supports compute
+  uint32_t queue_family_index = 0;
   float queue_priority = 1.0f;
   VkDeviceQueueCreateInfo queue_create_info{
       .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -146,5 +129,34 @@ void BaseEngine::initialize_device() {
     throw std::runtime_error("Failed to create logical device");
   }
 
-  vkGetDeviceQueue(device_, queue_family_index, 0, &queue_);
+  // that is this for? answer: load device functions
+  volkLoadDevice(device_);
+
+  // vkGetDeviceQueue(device_, queue_family_index, 0, &queue_);
+
+  spdlog::info("Device created");
+}
+
+void BaseEngine::vma_initialization() {
+  spdlog::debug("BaseEngine::vma_initialization");
+
+  VmaVulkanFunctions vulkanFunctions = {};
+  vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+  vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+
+  VmaAllocatorCreateInfo allocatorCreateInfo = {};
+  allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+  allocatorCreateInfo.physicalDevice = physical_device_;
+  allocatorCreateInfo.device = device_;
+  allocatorCreateInfo.instance = instance_;
+  allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+
+  VmaAllocator allocator;
+  if (vmaCreateAllocator(&allocatorCreateInfo, &allocator) != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create VMA allocator");
+  }
+
+  spdlog::info("VMA allocator created");
+
+  vmaDestroyAllocator(allocator);
 }
