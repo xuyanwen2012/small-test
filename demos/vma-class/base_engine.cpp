@@ -15,7 +15,7 @@ void BaseEngine::destroy() {
   // Cleanup
   vkDestroyDevice(device_, nullptr);
   vkDestroyInstance(instance_, nullptr);
-  // vmaDestroyAllocator(g_allocator);
+  vmaDestroyAllocator(g_allocator);
 }
 
 void BaseEngine::initialize_device() {

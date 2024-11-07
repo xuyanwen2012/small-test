@@ -9,7 +9,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 // a single global allocator for the engine
-// VmaAllocator g_allocator = VK_NULL_HANDLE;
+VmaAllocator g_allocator = VK_NULL_HANDLE;
 
 bool checkValidationLayerSupport(
     const std::vector<const char*>& validationLayers) {
@@ -141,6 +141,15 @@ void BaseEngine::vma_initialization() {
   const VmaVulkanFunctions vulkanFunctions{
       .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
       .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+      .vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties,
+      .vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties,
+      .vkAllocateMemory = vkAllocateMemory,
+      .vkFreeMemory = vkFreeMemory,
+
+      // .vkMapMemory = vkMapMemory,
+      // .vkUnmapMemory = vkUnmapMemory,
+      // .vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges,
+      // .vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges,
   };
 
   const VmaAllocatorCreateInfo allocatorCreateInfo{
