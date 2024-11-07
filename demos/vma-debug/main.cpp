@@ -1,16 +1,24 @@
 
 #include <spdlog/spdlog.h>
 
-#include "base_engine.hpp"
-#include "buffer.hpp"
+#include "engine.hpp"
+
+#include "shader_loader.hpp"
 
 int main() {
   spdlog::set_level(spdlog::level::debug);
 
-  BaseEngine engine;
-  Buffer buffer(engine.get_device(), 1024);
+  {
+    Engine engine;
 
-  Buffer buffer2(engine.get_device(), 1024);
+    auto buf = engine.buffer(1024);
+    auto buf2 = engine.buffer(1024);
+    auto buf3 = engine.buffer(1024);
+  }
 
+  auto shader = load_shader_from_file("init.spv");
+  auto shader2 = load_shader_from_file("morton.spv");
+
+  
   return 0;
 }

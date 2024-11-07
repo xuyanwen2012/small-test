@@ -1,0 +1,62 @@
+#pragma once
+
+#include <spdlog/spdlog.h>
+
+#include <filesystem>
+#include <fstream>
+#include <vector>
+
+namespace fs = std::filesystem;
+
+// if on android, base shader path is "/data/local/tmp"
+#ifdef __ANDROID__
+constexpr std::string shader_base_path = "/data/local/tmp";
+#else
+const std::string shader_base_path = fs::current_path().string();
+#endif
+
+// SPIR-V magic number (0x07230203)
+constexpr uint32_t SPIRV_MAGIC = 0x07230203;
+
+[[nodiscard]] inline std::vector<uint32_t> load_shader_from_file(
+    const std::string& filename) {
+  const fs::path shader_path = fs::path(shader_base_path) / filename;
+
+  spdlog::info("loading shader path: {}", shader_path.string());
+
+  if (!fs::exists(shader_path)) {
+    throw std::runtime_error("Shader file not found: " + shader_path.string());
+  }
+
+  // Open the shader file using the full path
+  std::ifstream file(shader_path, std::ios::ate | std::ios::binary);
+
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed to open file: " + shader_path.string());
+  }
+
+  const size_t file_size = file.tellg();
+  if (file_size < sizeof(uint32_t)) {
+    throw std::runtime_error("Shader file too small: " + shader_path.string());
+  }
+
+  // Read the file into a vector
+  std::vector<uint32_t> buffer(file_size / sizeof(uint32_t));
+  file.seekg(0);
+  file.read(reinterpret_cast<char*>(buffer.data()), file_size);
+
+  file.close();
+
+  if (file.fail()) {
+    throw std::runtime_error("Failed to read file: " + shader_path.string());
+  }
+
+  // Validate SPIR-V magic number
+  if (buffer.empty() || buffer[0] != SPIRV_MAGIC) {
+    throw std::runtime_error(
+        "Invalid SPIR-V shader file (wrong magic number): " +
+        shader_path.string());
+  }
+
+  return buffer;
+}
