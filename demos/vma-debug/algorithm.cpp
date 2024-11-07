@@ -72,28 +72,30 @@ void Algorithm::create_parameters() {
   }
 
   // Update descriptor set
-  for (auto i = 0u; i < usm_buffers_.size(); ++i) {
-    std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets;
-    compute_write_descriptor_sets.reserve(usm_buffers_.size());
+  std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets;
+  compute_write_descriptor_sets.reserve(usm_buffers_.size());
+  std::vector<VkDescriptorBufferInfo> buffer_infos(usm_buffers_.size());
 
-    auto buf_info = usm_buffers_[i]->construct_descriptor_buffer_info();
+  for (auto i = 0u; i < usm_buffers_.size(); ++i) {
+    buffer_infos[i] = usm_buffers_[i]->construct_descriptor_buffer_info();
     compute_write_descriptor_sets.emplace_back(VkWriteDescriptorSet{
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstSet = descriptor_set_,
         .dstBinding = static_cast<uint32_t>(i),
         .dstArrayElement = 0,
         .descriptorCount = 1,
-        .pBufferInfo = &buf_info,
+        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        .pBufferInfo = &buffer_infos[i],
     });
-
-    spdlog::debug("Updating descriptor set {}", i);
-    vkUpdateDescriptorSets(
-        device_,
-        static_cast<uint32_t>(compute_write_descriptor_sets.size()),
-        compute_write_descriptor_sets.data(),
-        0,
-        nullptr);
   }
+
+  spdlog::debug("Updating descriptor sets");
+  vkUpdateDescriptorSets(
+      device_,
+      static_cast<uint32_t>(compute_write_descriptor_sets.size()),
+      compute_write_descriptor_sets.data(),
+      0,
+      nullptr);
 }
 
 void Algorithm::create_pipeline() {}
