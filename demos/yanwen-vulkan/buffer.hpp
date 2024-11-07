@@ -2,12 +2,13 @@
 
 #include <spdlog/spdlog.h>
 
-#include "vk_resource.hpp"
+// #include "vk_resource.hpp"
 #include "vma_usage.hpp"
 
-class Buffer final : public VulkanResource<VkBuffer> {
+class Buffer final {
  public:
-  explicit Buffer(std::shared_ptr<VkDevice> device_ptr,
+  Buffer() = delete;
+  explicit Buffer(VkDevice device,
                   VkDeviceSize size,
                   VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                   VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO,
@@ -15,11 +16,14 @@ class Buffer final : public VulkanResource<VkBuffer> {
                       VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT |
                       VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
-  ~Buffer() override;
+  ~Buffer();
 
-  void destroy() override;
+  void destroy();
 
  private:
+  VkDevice device_ = VK_NULL_HANDLE;
+  VkBuffer buffer_ = VK_NULL_HANDLE;
+
   // Vulkan Memory Allocator components
   VmaAllocation allocation_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
@@ -30,4 +34,3 @@ class Buffer final : public VulkanResource<VkBuffer> {
 
   bool persistent_ = true;
 };
-

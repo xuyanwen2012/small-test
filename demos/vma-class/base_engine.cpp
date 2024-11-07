@@ -15,7 +15,7 @@ void BaseEngine::destroy() {
   // Cleanup
   vkDestroyDevice(device_, nullptr);
   vkDestroyInstance(instance_, nullptr);
-  vmaDestroyAllocator(g_allocator);
+  // vmaDestroyAllocator(g_allocator);
 }
 
 void BaseEngine::initialize_device() {
@@ -101,6 +101,15 @@ void BaseEngine::vma_initialization() {
   const VmaVulkanFunctions vulkanFunctions{
       .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
       .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+      .vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties,
+      .vkGetPhysicalDeviceMemoryProperties =
+          vkGetPhysicalDeviceMemoryProperties,
+      .vkAllocateMemory = vkAllocateMemory,
+      // .vkFreeMemory = vkFreeMemory,
+      // .vkMapMemory = vkMapMemory,
+      // .vkUnmapMemory = vkUnmapMemory,
+      // .vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges,
+      // .vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges,
   };
 
   const VmaAllocatorCreateInfo allocatorCreateInfo{
@@ -110,7 +119,7 @@ void BaseEngine::vma_initialization() {
       .instance = instance_,
       .vulkanApiVersion = VK_API_VERSION_1_3,
   };
-  
+
   if (vmaCreateAllocator(&allocatorCreateInfo, &g_allocator) != VK_SUCCESS) {
     std::cerr << "Failed to create VMA allocator" << std::endl;
     return;

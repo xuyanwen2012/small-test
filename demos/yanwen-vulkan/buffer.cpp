@@ -4,12 +4,12 @@
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
-Buffer::Buffer(std::shared_ptr<VkDevice> device_ptr,
+Buffer::Buffer(VkDevice device,
                const VkDeviceSize size,
                const VkBufferUsageFlags usage,
                const VmaMemoryUsage memory_usage,
                const VmaAllocationCreateFlags flags)
-    : VulkanResource(std::move(device_ptr)),
+    : device_(device),
       size_(size),
       persistent_{(flags & VMA_ALLOCATION_CREATE_MAPPED_BIT) != 0} {
   const VkBufferCreateInfo buffer_create_info{
@@ -25,13 +25,12 @@ Buffer::Buffer(std::shared_ptr<VkDevice> device_ptr,
 
   VmaAllocationInfo allocation_info{};
 
-  if (const auto result = vmaCreateBuffer(
-          g_allocator,
-          reinterpret_cast<const VkBufferCreateInfo *>(&buffer_create_info),
-          &memory_info,
-          reinterpret_cast<VkBuffer *>(&get_handle()),
-          &allocation_,
-          &allocation_info);
+  if (const auto result = vmaCreateBuffer(g_allocator,
+                                          &buffer_create_info,
+                                          &memory_info,
+                                          &buffer_,
+                                          &allocation_,
+                                          &allocation_info);
       result != VK_SUCCESS) {
     throw std::runtime_error("Cannot create HPPBuffer");
   }
@@ -55,6 +54,4 @@ Buffer::~Buffer() {
   destroy();
 }
 
-void Buffer::destroy() {
-  vmaDestroyBuffer(g_allocator, get_handle(), allocation_);
-}
+void Buffer::destroy() { vmaDestroyBuffer(g_allocator, buffer_, allocation_); }

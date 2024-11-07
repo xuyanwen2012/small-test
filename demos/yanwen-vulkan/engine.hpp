@@ -11,7 +11,7 @@ class Engine : public BaseEngine {
   ~Engine();
 
   [[nodiscard]] std::shared_ptr<Buffer> buffer(VkDeviceSize size) {
-    auto buf = std::make_shared<Buffer>(this->get_device_ptr(), size);
+    auto buf = std::make_shared<Buffer>(this->get_device(), size);
 
     if (manage_resources_) {
       buffers_.push_back(buf);

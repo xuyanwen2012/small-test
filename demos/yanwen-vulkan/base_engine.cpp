@@ -9,7 +9,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 // a single global allocator for the engine
-VmaAllocator g_allocator = VK_NULL_HANDLE;
+// VmaAllocator g_allocator = VK_NULL_HANDLE;
 
 bool checkValidationLayerSupport(
     const std::vector<const char*>& validationLayers) {
@@ -124,7 +124,6 @@ void BaseEngine::initialize_device() {
       .pQueueCreateInfos = &queueCreateInfo,
   };
 
-  // VkDevice device;
   if (vkCreateDevice(physical_device_, &deviceCreateInfo, nullptr, &device_) !=
       VK_SUCCESS) {
     spdlog::error("Failed to create logical device");

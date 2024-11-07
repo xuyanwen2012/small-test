@@ -3,11 +3,12 @@
 #define VK_NO_PROTOTYPES
 #include <volk.h>
 
-#include <memory>
-
 class BaseEngine {
  public:
-  BaseEngine() { initialize_device(); }
+  BaseEngine() {
+    initialize_device();
+    vma_initialization();
+  }
   ~BaseEngine() { destroy(); }
 
   void destroy();
@@ -15,9 +16,6 @@ class BaseEngine {
   // ---------------------------------------------------------------------------
   //                  Getter and Setter
   // ---------------------------------------------------------------------------
-  [[nodiscard]] std::shared_ptr<VkDevice> get_device_ptr() const {
-    return std::make_shared<VkDevice>(device_);
-  }
 
   [[nodiscard]] VkDevice& get_device() { return device_; }
   [[nodiscard]] const VkDevice& get_device() const { return device_; }

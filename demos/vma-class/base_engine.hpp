@@ -5,7 +5,10 @@
 
 class BaseEngine {
  public:
-  BaseEngine() { initialize_device(); }
+  BaseEngine() {
+    initialize_device();
+    vma_initialization();
+  }
   ~BaseEngine() { destroy(); }
 
   void destroy();

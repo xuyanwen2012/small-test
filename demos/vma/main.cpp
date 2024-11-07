@@ -7,6 +7,8 @@
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 int main() {
   // Initialize Volk
   if (volkInitialize() != VK_SUCCESS) {
@@ -99,14 +101,19 @@ int main() {
   std::cout << "VMA allocator created successfully!" << std::endl;
 
   // ---------------------------------------------------------------------------
-  VmaAllocation allocation_ = VK_NULL_HANDLE;
-  VkDeviceMemory memory_ = VK_NULL_HANDLE;
-  const VkDeviceSize size = 1024;
   VkBuffer buffer = VK_NULL_HANDLE;
 
-  const VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-  const VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_ONLY;
-  const VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+  VmaAllocation allocation_ = VK_NULL_HANDLE;
+  const VkDeviceSize size = 1024;
+
+  VkDeviceMemory memory_ = VK_NULL_HANDLE;
+  std::byte *mapped_data_ = nullptr;
+
+  const VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+  const VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO;
+  const VmaAllocationCreateFlags flags =
+      VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT |
+      VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
   const VkBufferCreateInfo buffer_create_info{
       .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -121,14 +128,12 @@ int main() {
 
   VmaAllocationInfo allocation_info{};
 
-  if (const auto result = vmaCreateBuffer(
-          allocator,
-          reinterpret_cast<const VkBufferCreateInfo *>(&buffer_create_info),
-          &memory_info,
-          // reinterpret_cast<VkBuffer *>(&buffer),
-          &buffer,
-          &allocation_,
-          &allocation_info);
+  if (const auto result = vmaCreateBuffer(allocator,
+                                          &buffer_create_info,
+                                          &memory_info,
+                                          &buffer,
+                                          &allocation_,
+                                          &allocation_info);
       result != VK_SUCCESS) {
     throw std::runtime_error("Cannot create HPPBuffer");
   }
@@ -140,12 +145,22 @@ int main() {
   std::cout << "\tmemoryType: " << allocation_info.memoryType << std::endl;
   std::cout << "\tmappedData: " << allocation_info.pMappedData << std::endl;
 
+  memory_ = static_cast<VkDeviceMemory>(allocation_info.deviceMemory);
+  mapped_data_ = static_cast<std::byte *>(allocation_info.pMappedData);
+
+  // write something to the mapped data
+  std::memset(mapped_data_, 0x42, size);
+
+  // read something from the mapped data
+  std::cout << "mapped_data_[0]: " << static_cast<int>(mapped_data_[0])
+            << std::endl;
+
   // ---------------------------------------------------------------------------
 
   // Cleanup
   vmaDestroyBuffer(allocator, buffer, allocation_);
   vmaDestroyAllocator(allocator);
-  
+
   vkDestroyDevice(device, nullptr);
   vkDestroyInstance(instance, nullptr);
   return 0;
