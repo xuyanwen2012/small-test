@@ -1,12 +1,11 @@
 #pragma once
 
-#include "volk.h"
-
-#include "vk_mem_alloc.h"
+#define VK_NO_PROTOTYPES
+#include <volk.h>
 
 class BaseEngine {
  public:
-  BaseEngine(bool enable_validation = false);
+  BaseEngine() { initialize_device(); }
   ~BaseEngine() { destroy(); }
 
   void destroy();
@@ -16,12 +15,7 @@ class BaseEngine {
   void vma_initialization();
 
   VkInstance instance_ = VK_NULL_HANDLE;
+  VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
   VkDevice device_ = VK_NULL_HANDLE;
   VkQueue queue_ = VK_NULL_HANDLE;
-
-  // Vulkan Memory Allocator
-  // VmaAllocator allocator_ = VK_NULL_HANDLE;
-
-  bool enable_validation_;
-  VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
 };

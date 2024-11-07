@@ -3,10 +3,9 @@
 #include <iostream>
 #include <vector>
 
-// #define VMA_IMPLEMENTATION
-// #include "vk_mem_alloc.h"
-
 #include "vma_usage.hpp"
+
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 // a single global allocator for the engine
 VmaAllocator g_allocator = VK_NULL_HANDLE;
@@ -21,23 +20,26 @@ void BaseEngine::destroy() {
 
 void BaseEngine::initialize_device() {
   std::cout << "BaseEngine::initialize_device" << std::endl;
-  // Initialize Volk
+
+  // Initialize Volk [0/4]
   if (volkInitialize() != VK_SUCCESS) {
     throw std::runtime_error("Failed to initialize Volk");
   }
 
-  // Create Vulkan instance
-  VkApplicationInfo appInfo = {};
-  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = "Minimal Vulkan";
-  appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.pEngineName = "No Engine";
-  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.apiVersion = VK_API_VERSION_1_3;
+  // Create Vulkan instance [1/4]
+  constexpr VkApplicationInfo appInfo{
+      .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+      .pApplicationName = "Minimal Vulkan",
+      .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+      .pEngineName = "No Engine",
+      .engineVersion = VK_MAKE_VERSION(1, 0, 0),
+      .apiVersion = VK_API_VERSION_1_3,
+  };
 
-  VkInstanceCreateInfo createInfo = {};
-  createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  createInfo.pApplicationInfo = &appInfo;
+  const VkInstanceCreateInfo createInfo{
+      .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+      .pApplicationInfo = &appInfo,
+  };
 
   if (vkCreateInstance(&createInfo, nullptr, &instance_) != VK_SUCCESS) {
     std::cerr << "Failed to create Vulkan instance" << std::endl;
@@ -47,7 +49,7 @@ void BaseEngine::initialize_device() {
   // Load instance functions
   volkLoadInstance(instance_);
 
-  // Enumerate physical devices
+  // Enumerate physical devices [2/4]
   uint32_t deviceCount = 0;
   vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
   if (deviceCount == 0) {
@@ -58,7 +60,7 @@ void BaseEngine::initialize_device() {
   std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
   vkEnumeratePhysicalDevices(instance_, &deviceCount, physicalDevices.data());
 
-  // Select the first physical device
+  // Select the first physical device [3/4]
   physical_device_ = physicalDevices[0];
 
   // print the name of the physical device
@@ -66,18 +68,20 @@ void BaseEngine::initialize_device() {
   vkGetPhysicalDeviceProperties(physical_device_, &deviceProperties);
   std::cout << "Physical device: " << deviceProperties.deviceName << std::endl;
 
-  // Create a logical device
-  float queuePriority = 1.0f;
-  VkDeviceQueueCreateInfo queueCreateInfo = {};
-  queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-  queueCreateInfo.queueFamilyIndex = 0;  // assume
-  queueCreateInfo.queueCount = 1;
-  queueCreateInfo.pQueuePriorities = &queuePriority;
+  // Create a logical device [4/4]
+  constexpr float queuePriority = 1.0f;
+  const VkDeviceQueueCreateInfo queueCreateInfo{
+      .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+      .queueFamilyIndex = 0,  // assume
+      .queueCount = 1,
+      .pQueuePriorities = &queuePriority,
+  };
 
-  VkDeviceCreateInfo deviceCreateInfo = {};
-  deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  deviceCreateInfo.queueCreateInfoCount = 1;
-  deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+  const VkDeviceCreateInfo deviceCreateInfo{
+      .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+      .queueCreateInfoCount = 1,
+      .pQueueCreateInfos = &queueCreateInfo,
+  };
 
   // VkDevice device;
   if (vkCreateDevice(physical_device_, &deviceCreateInfo, nullptr, &device_) !=
@@ -94,19 +98,19 @@ void BaseEngine::initialize_device() {
 void BaseEngine::vma_initialization() {
   std::cout << "BaseEngine::vma_initialization" << std::endl;
 
-  // create VMA allocator
-  VmaVulkanFunctions vulkanFunctions = {};
-  vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-  vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+  const VmaVulkanFunctions vulkanFunctions{
+      .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+      .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+  };
 
-  VmaAllocatorCreateInfo allocatorCreateInfo = {};
-  allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_3;
-  allocatorCreateInfo.physicalDevice = physical_device_;
-  allocatorCreateInfo.device = device_;
-  allocatorCreateInfo.instance = instance_;
-  allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
-
-  // VmaAllocator allocator;
+  const VmaAllocatorCreateInfo allocatorCreateInfo{
+      .physicalDevice = physical_device_,
+      .device = device_,
+      .pVulkanFunctions = &vulkanFunctions,
+      .instance = instance_,
+      .vulkanApiVersion = VK_API_VERSION_1_3,
+  };
+  
   if (vmaCreateAllocator(&allocatorCreateInfo, &g_allocator) != VK_SUCCESS) {
     std::cerr << "Failed to create VMA allocator" << std::endl;
     return;
