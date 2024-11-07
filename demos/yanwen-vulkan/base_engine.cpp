@@ -2,8 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-#define VMA_IMPLEMENTATION
-#include "vk_mem_alloc.h"
+// #include "vk_mem_alloc.h"
 
 BaseEngine::BaseEngine(bool enable_validation)
     : enable_validation_(enable_validation) {
@@ -21,10 +20,10 @@ BaseEngine::BaseEngine(bool enable_validation)
 void BaseEngine::destroy() {
   spdlog::debug("BaseEngine::destroy");
 
-  if (allocator_ != VK_NULL_HANDLE) {
-    vmaDestroyAllocator(allocator_);
-    allocator_ = VK_NULL_HANDLE;
-  }
+  // if (allocator_ != VK_NULL_HANDLE) {
+  //   vmaDestroyAllocator(allocator_);
+  //   allocator_ = VK_NULL_HANDLE;
+  // }
   if (device_ != VK_NULL_HANDLE) {
     vkDestroyDevice(device_, nullptr);
     device_ = VK_NULL_HANDLE;

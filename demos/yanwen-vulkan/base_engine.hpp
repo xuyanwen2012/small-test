@@ -1,6 +1,5 @@
 #pragma once
 
-#define VK_NO_PROTOTYPES 1
 #include "volk.h"
 
 #include "vk_mem_alloc.h"
@@ -21,7 +20,7 @@ class BaseEngine {
   VkQueue queue_ = VK_NULL_HANDLE;
 
   // Vulkan Memory Allocator
-  VmaAllocator allocator_ = VK_NULL_HANDLE;
+  // VmaAllocator allocator_ = VK_NULL_HANDLE;
 
   bool enable_validation_;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
