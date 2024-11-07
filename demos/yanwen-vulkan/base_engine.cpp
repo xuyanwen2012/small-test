@@ -35,6 +35,12 @@ void BaseEngine::destroy() {
 }
 
 void BaseEngine::initialize_device() {
+  // Initialize Volk
+  if (volkInitialize() != VK_SUCCESS) {
+    throw std::runtime_error("Failed to initialize Volk");
+  }
+
+
   // Create instance
   VkApplicationInfo app_info{.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
                              .pApplicationName = "Vulkan App",
