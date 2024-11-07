@@ -21,8 +21,6 @@ class BaseEngine {
 
   [[nodiscard]] VkDevice get_device() const { return device_; }
 
-  
-
   [[nodiscard]] static VmaAllocator get_allocator() { return vma_allocator; }
 
  protected:

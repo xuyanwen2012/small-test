@@ -19,7 +19,8 @@ class Algorithm {
         device_(device),
         threads_per_block_(threads_per_block),
         usm_buffers_(buffers) {
-    spdlog::info("Algorithm::Algorithm() Creating algorithm with {} buffers",
+    spdlog::info("Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
+                 spirv_filename_,
                  buffers.size());
 
     create_parameters();

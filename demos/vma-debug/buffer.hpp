@@ -20,6 +20,12 @@ class Buffer {
 
   void destroy();
 
+  // ---------------------------------------------------------------------------
+  //      The following functions provides infos for the descriptor set
+  // ---------------------------------------------------------------------------
+
+  [[nodiscard]] VkDescriptorBufferInfo construct_descriptor_buffer_info() const;
+
  private:
   VkDevice device_ = VK_NULL_HANDLE;
 

@@ -61,3 +61,12 @@ Buffer::~Buffer() {
 void Buffer::destroy() {
   vmaDestroyBuffer(BaseEngine::get_allocator(), buffer_, allocation_);
 }
+
+
+VkDescriptorBufferInfo Buffer::construct_descriptor_buffer_info() const {
+  return VkDescriptorBufferInfo{
+      .buffer = buffer_,
+      .offset = 0,
+      .range = size_,
+  };
+}
