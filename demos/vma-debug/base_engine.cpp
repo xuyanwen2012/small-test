@@ -1,6 +1,7 @@
 #include "base_engine.hpp"
 
-#include <iostream>
+#include <spdlog/spdlog.h>
+
 #include <vector>
 
 #define VMA_IMPLEMENTATION
@@ -8,15 +9,21 @@
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
+VmaAllocator BaseEngine::vma_allocator;
+
 void BaseEngine::destroy() {
-  vmaDestroyAllocator(allocator_);
+  spdlog::debug("BaseEngine::destroy");
+
+  vmaDestroyAllocator(vma_allocator);
   vkDestroyDevice(device_, nullptr);
   vkDestroyInstance(instance_, nullptr);
 }
 
 void BaseEngine::initialize_device() {
+  spdlog::debug("BaseEngine::initialize_device");
+
   if (volkInitialize() != VK_SUCCESS) {
-    std::cerr << "Failed to initialize Volk" << std::endl;
+    spdlog::error("Failed to initialize Volk");
     return;
   }
 
@@ -36,7 +43,7 @@ void BaseEngine::initialize_device() {
   };
 
   if (vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS) {
-    std::cerr << "Failed to create Vulkan instance" << std::endl;
+    spdlog::error("Failed to create Vulkan instance");
     return;
   }
 
@@ -47,7 +54,7 @@ void BaseEngine::initialize_device() {
   uint32_t deviceCount = 0;
   vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
   if (deviceCount == 0) {
-    std::cerr << "Failed to find GPUs with Vulkan support" << std::endl;
+    spdlog::error("Failed to find GPUs with Vulkan support");
     return;
   }
 
@@ -61,12 +68,12 @@ void BaseEngine::initialize_device() {
   VkPhysicalDeviceProperties deviceProperties;
   vkGetPhysicalDeviceProperties(physical_device_, &deviceProperties);
   if (deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
-    std::cerr << "This physical device is not an integrated GPU" << std::endl;
+    spdlog::warn("This physical device is not an integrated GPU");
     return;
   }
 
   // print the name of the physical device
-  std::cout << "Physical device: " << deviceProperties.deviceName << std::endl;
+  spdlog::info("Physical device: {}", deviceProperties.deviceName);
 
   // Create a logical device
   constexpr float queue_priority = 1.0f;
@@ -86,13 +93,13 @@ void BaseEngine::initialize_device() {
   if (vkCreateDevice(
           physical_device_, &device_create_info, nullptr, &device_) !=
       VK_SUCCESS) {
-    std::cerr << "Failed to create logical device" << std::endl;
+    spdlog::error("Failed to create logical device");
     return;
   }
 
   volkLoadDevice(device_);
 
-  std::cout << "Vulkan instance and device created successfully!" << std::endl;
+  spdlog::info("Vulkan instance and device created successfully!");
 }
 
 void BaseEngine::vma_initialization() {
@@ -101,7 +108,7 @@ void BaseEngine::vma_initialization() {
       .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
   };
 
-  const VmaAllocatorCreateInfo allocator_create_info{
+  const VmaAllocatorCreateInfo vma_allocatorcreate_info{
       .physicalDevice = physical_device_,
       .device = device_,
       .pVulkanFunctions = &vulkan_functions,
@@ -109,10 +116,11 @@ void BaseEngine::vma_initialization() {
       .vulkanApiVersion = VK_API_VERSION_1_3,
   };
 
-  if (vmaCreateAllocator(&allocator_create_info, &allocator_) != VK_SUCCESS) {
-    std::cerr << "Failed to create VMA allocator" << std::endl;
+  if (vmaCreateAllocator(&vma_allocatorcreate_info, &vma_allocator) !=
+      VK_SUCCESS) {
+    spdlog::error("Failed to create VMA allocator");
     return;
   }
 
-  std::cout << "VMA allocator created successfully!" << std::endl;
+  spdlog::info("VMA allocator created successfully!");
 }

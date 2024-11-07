@@ -19,7 +19,11 @@ class BaseEngine {
 
   void destroy();
 
-  [[nodiscard]] VmaAllocator get_allocator() const { return allocator_; }
+  [[nodiscard]] VkDevice get_device() const { return device_; }
+
+  
+
+  [[nodiscard]] static VmaAllocator get_allocator() { return vma_allocator; }
 
  protected:
   void initialize_device();
@@ -30,5 +34,5 @@ class BaseEngine {
   VkDevice device_ = VK_NULL_HANDLE;
   VkQueue queue_ = VK_NULL_HANDLE;
 
-  VmaAllocator allocator_ = VK_NULL_HANDLE;
+  static VmaAllocator vma_allocator;
 };

@@ -70,8 +70,9 @@ int main(int argc, char** argv) {
     //   std::cout << "Buffer::Buffer" << std::endl;
     //   std::cout << "\tsize: " << allocation_info.size << std::endl;
     //   std::cout << "\toffset: " << allocation_info.offset << std::endl;
-    //   std::cout << "\tmemoryType: " << allocation_info.memoryType << std::endl;
-    //   std::cout << "\tmappedData: " << allocation_info.pMappedData << std::endl;
+    //   std::cout << "\tmemoryType: " << allocation_info.memoryType <<
+    //   std::endl; std::cout << "\tmappedData: " << allocation_info.pMappedData
+    //   << std::endl;
 
     //   mapped_data_ = static_cast<std::byte*>(allocation_info.pMappedData);
 

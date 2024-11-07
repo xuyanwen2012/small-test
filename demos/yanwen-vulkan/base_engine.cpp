@@ -142,7 +142,8 @@ void BaseEngine::vma_initialization() {
       .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
       .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
       .vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties,
-      .vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties,
+      .vkGetPhysicalDeviceMemoryProperties =
+          vkGetPhysicalDeviceMemoryProperties,
       .vkAllocateMemory = vkAllocateMemory,
       .vkFreeMemory = vkFreeMemory,
 
