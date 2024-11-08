@@ -14,18 +14,24 @@ class Algorithm {
   explicit Algorithm(VkDevice device,
                      std::string_view spirv_filename,
                      const std::vector<std::shared_ptr<Buffer>> &buffers,
-                     uint32_t threads_per_block)
+                     uint32_t threads_per_block,
+                     const std::vector<float> &push_constants = {})
       : spirv_filename_(spirv_filename),
         device_(device),
         threads_per_block_(threads_per_block),
         usm_buffers_(buffers) {
-    spdlog::info("Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
-                 spirv_filename_,
-                 buffers.size());
+    spdlog::info(
+        "Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
+        spirv_filename_,
+        buffers.size());
 
+    if (!push_constants.empty()) {
+      set_push_constants(push_constants);
+    }
+
+    create_shader_module();
     create_parameters();
     create_pipeline();
-    create_shader_module();
   }
 
   ~Algorithm() {
@@ -35,14 +41,47 @@ class Algorithm {
 
   void destroy();
 
+  template <typename T>
+  void set_push_constants(const std::vector<T> &push_constants) {
+    const uint32_t memory_size = sizeof(decltype(push_constants.back()));
+    const uint32_t size = push_constants.size();
+    this->set_push_constants(push_constants.data(), size, memory_size);
+  }
+
+  void set_push_constants(const void *data,
+                          uint32_t size,
+                          uint32_t type_memory_size);
+
   void record_bind_core(VkCommandBuffer cmd_buf) const;
   void record_bind_push(VkCommandBuffer cmd_buf) const;
   void record_dispatch_tmp(VkCommandBuffer cmd_buf, uint32_t n) const;
 
  private:
-  void create_parameters();
-  void create_pipeline();
+  // L1
   void create_shader_module();
+
+  void create_parameters() {
+    create_descriptor_set_layout();
+    create_descriptor_pool();
+    allocate_descriptor_sets();
+    update_descriptor_sets();
+  }
+
+  void create_pipeline() {
+    create_pipeline_layout();
+    create_pipeline_cache();
+    create_compute_pipeline();
+  }
+
+  // L2
+  void create_descriptor_set_layout();
+  void create_descriptor_pool();
+  void allocate_descriptor_sets();
+  void update_descriptor_sets();
+
+  void create_pipeline_layout();
+  void create_pipeline_cache();
+  void create_compute_pipeline();
 
   std::string spirv_filename_;
 
