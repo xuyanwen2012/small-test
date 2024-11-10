@@ -2,7 +2,7 @@
 
 #include "algorithm.hpp"
 #include "engine.hpp"
-
+#include "sequence.hpp"
 int main() {
   spdlog::set_level(spdlog::level::debug);
 
@@ -22,6 +22,10 @@ int main() {
                    {buf, buf2, buf3},
                    threads_per_block,
                    {n});
+
+    Sequence seq(engine.get_device(),
+                 engine.get_queue(),
+                 engine.get_compute_queue_index());
   }
 
   return 0;

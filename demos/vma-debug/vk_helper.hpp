@@ -1,13 +1,12 @@
 #pragma once
 
-// #include <vulkan/vulkan.h>
 #include <volk.h>
 
 #include <stdexcept>
 #include <string>
 
 // Helper function to convert VkResult to a readable string
-inline const char* VkResultToString(VkResult result) {
+constexpr const char* VkResultToString(VkResult result) {
   switch (result) {
     case VK_SUCCESS:
       return "VK_SUCCESS";
@@ -90,7 +89,7 @@ inline const char* VkResultToString(VkResult result) {
   }
 }
 
-inline void check_vk_result(VkResult result) {
+constexpr void check_vk_result(VkResult result) {
   if (result != VK_SUCCESS) {
     throw std::runtime_error("Vulkan error: " +
                              std::string(VkResultToString(result)));

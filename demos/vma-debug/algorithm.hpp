@@ -69,21 +69,11 @@ class Algorithm {
 
   void create_pipeline() ;
 
-  // void create_pipeline() {
-  //   create_pipeline_layout();
-  //   create_pipeline_cache();
-  //   create_compute_pipeline();
-  // }
-
   // L2
   void create_descriptor_set_layout();
   void create_descriptor_pool();
   void allocate_descriptor_sets();
   void update_descriptor_sets();
-
-  // void create_pipeline_layout();
-  // void create_pipeline_cache();
-  // void create_compute_pipeline();
 
   std::string spirv_filename_;
 

@@ -104,11 +104,20 @@ void BaseEngine::initialize_device() {
   // print the name of the physical device
   spdlog::info("Physical device: {}", deviceProperties.deviceName);
 
-  // Create a logical device
+  // // Create a logical device
+  // constexpr float queue_priority = 1.0f;
+  // const VkDeviceQueueCreateInfo queue_create_info{
+  //     .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+  //     .queueFamilyIndex = 0,  // assume
+  //     .queueCount = 1,
+  //     .pQueuePriorities = &queue_priority,
+  // };
+
+  // Create a logical device (compute queue)
   constexpr float queue_priority = 1.0f;
   const VkDeviceQueueCreateInfo queue_create_info{
       .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-      .queueFamilyIndex = 0,  // assume
+      .queueFamilyIndex = compute_queue_index_,
       .queueCount = 1,
       .pQueuePriorities = &queue_priority,
   };
