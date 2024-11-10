@@ -1,6 +1,7 @@
 #include "algorithm.hpp"
 
 #include "shader_loader.hpp"
+#include "vk_helper.hpp"
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
@@ -119,59 +120,8 @@ void Algorithm::set_push_constants(const void *data,
   push_constants_data_type_memory_size_ = type_memory_size;
 }
 
-void Algorithm::create_pipeline_layout() {
-  // Push constant range (1/3)
-  const auto push_constant_range = VkPushConstantRange{
-      .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-      .offset = 0,
-      .size = push_constants_data_type_memory_size_ * push_constants_size_,
-  };
-
-  // Pipeline layout (2/3)
-  VkPipelineLayoutCreateInfo layout_create_info = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-      .setLayoutCount = 1,
-      .pSetLayouts = &descriptor_set_layout_,
-      .pushConstantRangeCount = 1,
-      .pPushConstantRanges = &push_constant_range,
-  };
-
-  // Create pipeline layout (3/3)
-  if (vkCreatePipelineLayout(
-          device_, &layout_create_info, nullptr, &pipeline_layout_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Failed to create pipeline layout");
-  }
-}
-
-void Algorithm::create_pipeline_cache() {
-  // Pipeline cache info (1/2)
-  constexpr auto pipeline_cache_info = VkPipelineCacheCreateInfo{
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
-  };
-
-  // Create pipeline cache (2/2)
-  if (vkCreatePipelineCache(
-          device_, &pipeline_cache_info, nullptr, &pipeline_cache_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Failed to create pipeline cache");
-  }
-}
-
-void Algorithm::create_compute_pipeline() {
-  // Pipeline shader stage create info (1/3)
-  VkPipelineShaderStageCreateInfo shader_stage_create_info = {
-      .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-      .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-      .module = shader_module_,
-      .pName = "main",
-  };
-
-  VkComputePipelineCreateInfo
-}
-
-// void Algorithm::create_pipeline() {
-//   // Push constant Range (1.5/3)
+// void Algorithm::create_pipeline_layout() {
+//   // Push constant range (1/3)
 //   const auto push_constant_range = VkPushConstantRange{
 //       .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
 //       .offset = 0,
@@ -187,35 +137,35 @@ void Algorithm::create_compute_pipeline() {
 //       .pPushConstantRanges = &push_constant_range,
 //   };
 
+//   // Create pipeline layout (3/3)
 //   if (vkCreatePipelineLayout(
 //           device_, &layout_create_info, nullptr, &pipeline_layout_) !=
 //       VK_SUCCESS) {
 //     throw std::runtime_error("Failed to create pipeline layout");
 //   }
+// }
 
-//   // Pipeline cache (2.5/3)
+// void Algorithm::create_pipeline_cache() {
+//   // Pipeline cache info (1/2)
 //   constexpr auto pipeline_cache_info = VkPipelineCacheCreateInfo{
 //       .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
 //   };
 
+//   // Create pipeline cache (2/2)
 //   if (vkCreatePipelineCache(
 //           device_, &pipeline_cache_info, nullptr, &pipeline_cache_) !=
 //       VK_SUCCESS) {
 //     throw std::runtime_error("Failed to create pipeline cache");
 //   }
+// }
 
-//   // Specialization info (2.75/3) telling the shader the workgroup size
-
-//   spdlog::debug("Algorithm::create_pipeline, is not CLSPV shader");
-
-//   constexpr auto p_name = "main";
-
-//   // Pipeline itself (3/3)
+// void Algorithm::create_compute_pipeline() {
+//   // Pipeline shader stage create info (1/3)
 //   VkPipelineShaderStageCreateInfo shader_stage_create_info = {
 //       .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 //       .stage = VK_SHADER_STAGE_COMPUTE_BIT,
 //       .module = shader_module_,
-//       .pName = p_name,
+//       .pName = "main",
 //   };
 
 //   VkComputePipelineCreateInfo pipeline_create_info = {
@@ -225,20 +175,83 @@ void Algorithm::create_compute_pipeline() {
 //       .basePipelineHandle = VK_NULL_HANDLE,
 //   };
 
-//   spdlog::debug("Creating compute pipeline with:");
-//   spdlog::debug("  Shader module handle: {}", (void *)shader_module_);
-//   spdlog::debug("  Pipeline layout handle: {}", (void *)pipeline_layout_);
-//   spdlog::debug("  Entry point name: {}", p_name);
-
-//   VkResult result = vkCreateComputePipelines(
+//   check_vk_result(vkCreateComputePipelines(
 //       device_, pipeline_cache_, 1, &pipeline_create_info, nullptr,
-//       &pipeline_);
-//   if (result != VK_SUCCESS) {
-//     throw std::runtime_error("Failed to create compute pipeline");
-//   }
-
-//   spdlog::debug("Pipeline created successfully");
+//       &pipeline_));
 // }
+
+void Algorithm::create_pipeline() {
+  // Push constant Range (1.5/3)
+  const auto push_constant_range = VkPushConstantRange{
+      .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+      .offset = 0,
+      .size = push_constants_data_type_memory_size_ * push_constants_size_,
+  };
+
+  // Pipeline layout (2/3)
+  VkPipelineLayoutCreateInfo layout_create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+      .setLayoutCount = 1,
+      .pSetLayouts = &descriptor_set_layout_,
+      .pushConstantRangeCount = 1,
+      .pPushConstantRanges = &push_constant_range,
+  };
+
+  if (vkCreatePipelineLayout(
+          device_, &layout_create_info, nullptr, &pipeline_layout_) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("Failed to create pipeline layout");
+  }
+
+  // Pipeline cache (2.5/3)
+  constexpr auto pipeline_cache_info = VkPipelineCacheCreateInfo{
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+  };
+
+  if (vkCreatePipelineCache(
+          device_, &pipeline_cache_info, nullptr, &pipeline_cache_) !=
+      VK_SUCCESS) {
+    throw std::runtime_error("Failed to create pipeline cache");
+  }
+
+  // Specialization info (2.75/3) telling the shader the workgroup size
+
+  spdlog::debug("Algorithm::create_pipeline, is not CLSPV shader");
+
+  constexpr auto p_name = "main";
+
+  // Pipeline itself (3/3)
+  VkPipelineShaderStageCreateInfo shader_stage_create_info = {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+      .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+      .module = shader_module_,
+      .pName = p_name,
+  };
+
+  VkComputePipelineCreateInfo pipeline_create_info = {
+      .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+      .stage = shader_stage_create_info,
+      .layout = pipeline_layout_,
+      .basePipelineHandle = VK_NULL_HANDLE,
+  };
+
+  spdlog::debug("Creating compute pipeline with:");
+  spdlog::debug("  Shader module handle: {}", (void *)shader_module_);
+  spdlog::debug("  Pipeline layout handle: {}", (void *)pipeline_layout_);
+  spdlog::debug("  Entry point name: {}", p_name);
+
+  // VkResult result = vkCreateComputePipelines(
+  //     device_, pipeline_cache_, 1, &pipeline_create_info, nullptr,
+  //     &pipeline_);
+  // if (result != VK_SUCCESS) {
+  //   throw std::runtime_error("Failed to create compute pipeline");
+  // }
+
+  check_vk_result(vkCreateComputePipelines(
+      device_, pipeline_cache_, 1, &pipeline_create_info, nullptr, &pipeline_));
+
+  spdlog::debug("Pipeline created successfully");
+}
 
 void Algorithm::create_shader_module() {
   const auto spirv_binary = load_shader_from_file(spirv_filename_);
@@ -249,10 +262,8 @@ void Algorithm::create_shader_module() {
       .pCode = reinterpret_cast<const uint32_t *>(spirv_binary.data()),
   };
 
-  if (vkCreateShaderModule(device_, &create_info, nullptr, &shader_module_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Failed to create shader module");
-  }
+  check_vk_result(
+      vkCreateShaderModule(device_, &create_info, nullptr, &shader_module_));
 
   spdlog::debug("Shader module created successfully");
 }
