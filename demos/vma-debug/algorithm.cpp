@@ -282,3 +282,61 @@ void Algorithm::create_shader_module() {
 
   spdlog::debug("Shader module created successfully");
 }
+
+void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
+  spdlog::debug("Algorithm::record_bind_core()");
+
+  //   cmd_buf.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline_);
+  // cmd_buf.bindDescriptorSets(vk::PipelineBindPoint::eCompute,
+  //                            pipeline_layout_,
+  //                            0,
+  //                            descriptor_set_,
+  //                            nullptr);
+
+  vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_);
+  vkCmdBindDescriptorSets(cmd_buf,
+                          VK_PIPELINE_BIND_POINT_COMPUTE,
+                          pipeline_layout_,
+                          0,
+                          1,
+                          &descriptor_set_,
+                          0,
+                          nullptr);
+}
+
+void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
+  //   spdlog::debug("YxAlgorithm::record_bind_push, constants memory size: {}",
+  //               push_constants_size_ *
+  //               push_constants_data_type_memory_size_);
+
+  // cmd_buf.pushConstants(
+  //     pipeline_layout_,
+  //     vk::ShaderStageFlagBits::eCompute,
+  //     0,
+  //     push_constants_size_ * push_constants_data_type_memory_size_,
+  //     push_constants_data_);
+
+  spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
+                push_constants_size_ * push_constants_data_type_memory_size_);
+
+  vkCmdPushConstants(
+      cmd_buf,
+      pipeline_layout_,
+      VK_SHADER_STAGE_COMPUTE_BIT,
+      0,
+      push_constants_size_ * push_constants_data_type_memory_size_,
+      push_constants_data_);
+}
+
+void Algorithm::record_dispatch_tmp(VkCommandBuffer cmd_buf, uint32_t n) const {
+  //   const auto num_blocks =
+  //     (data_size + threads_per_block_ - 1u) / threads_per_block_;
+  // spdlog::info("YxAlgorithm::record_dispatch_tmp, num_blocks: {}",
+  // num_blocks); cmd_buf.dispatch(num_blocks, 1u, 1u);
+
+  spdlog::debug("Algorithm::record_dispatch_tmp, n: {}", n);
+
+  const auto num_blocks = (n + threads_per_block_ - 1u) / threads_per_block_;
+
+  vkCmdDispatch(cmd_buf, num_blocks, 1u, 1u);
+}

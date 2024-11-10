@@ -4,6 +4,8 @@
 
 #include "vk_helper.hpp"
 
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 void Sequence::destroy() {
   spdlog::debug("Sequence::destroy()");
 
@@ -52,10 +54,6 @@ void Sequence::create_sync_objects() {
 void Sequence::cmd_begin() const {
   spdlog::debug("Sequence::cmd_begin()");
 
-  //   constexpr auto info = vk::CommandBufferBeginInfo().setFlags(
-  //       vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-  //   handle_.begin(info);
-
   const VkCommandBufferBeginInfo begin_info = {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
       .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
@@ -73,9 +71,6 @@ void Sequence::cmd_end() const {
 void Sequence::launch_kernel_async() {
   spdlog::debug("Sequence::launch_kernel_async()");
 
-  //   const auto submit_info = vk::SubmitInfo().setCommandBuffers(handle_);
-  //   assert(vkh_queue_ != nullptr);
-
   const VkSubmitInfo submit_info = {
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
       .commandBufferCount = 1,
@@ -87,12 +82,6 @@ void Sequence::launch_kernel_async() {
 
 void Sequence::sync() const {
   spdlog::debug("Sequence::sync()");
-
-  //   spdlog::debug("Sequence::sync");
-  //   const auto wait_result =
-  //       device_ptr_->waitForFences(fence_, false, UINT64_MAX);
-  //   assert(wait_result == vk::Result::eSuccess);
-  //   device_ptr_->resetFences(fence_);
 
   check_vk_result(vkWaitForFences(device_, 1, &fence_, VK_TRUE, UINT64_MAX));
   check_vk_result(vkResetFences(device_, 1, &fence_));

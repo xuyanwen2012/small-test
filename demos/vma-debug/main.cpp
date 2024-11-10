@@ -3,6 +3,7 @@
 #include "algorithm.hpp"
 #include "engine.hpp"
 #include "sequence.hpp"
+
 int main() {
   spdlog::set_level(spdlog::level::debug);
 
@@ -26,7 +27,12 @@ int main() {
     Sequence seq(engine.get_device(),
                  engine.get_queue(),
                  engine.get_compute_queue_index());
+
+    seq.simple_record_commands(algo, n);
+    seq.launch_kernel_async();
+    seq.sync();
   }
 
-  return 0;
+  spdlog::info("Done!");
+  return EXIT_SUCCESS;
 }
