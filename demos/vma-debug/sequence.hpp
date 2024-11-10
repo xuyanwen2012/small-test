@@ -1,5 +1,6 @@
 #pragma once
 
+#include "algorithm.hpp"
 #include "base_engine.hpp"
 
 class Sequence {
@@ -24,6 +25,34 @@ class Sequence {
 
   void cmd_begin() const;
   void cmd_end() const;
+
+  /**
+   * @brief Record the commands of an Algorithm. It will bind pipeline, push
+   * constants, and dispatch.
+   *
+   * @param algo Algorithm to be recorded.
+   * @param n Number of elements to be processed.
+   */
+  void simple_record_commands(const Algorithm &algo, const uint32_t n) const {
+    cmd_begin();
+    algo.record_bind_core(command_buffer_);
+    algo.record_bind_push(command_buffer_);
+    algo.record_dispatch_tmp(command_buffer_, n);
+    cmd_end();
+  }
+
+  /**
+   * @brief Once all commands are recorded, you can launch the kernel. It will
+   * submit all the commands to the GPU. It is asynchronous, so you can do other
+   * CPU tasks while the GPU is processing.
+   */
+  void launch_kernel_async();
+
+  /**
+   * @brief Wait for the GPU to finish all the commands. This is like
+   * "cudaDeviceSynchronize()"
+   */
+  void sync() const;
 
  private:
   void create_sync_objects();
