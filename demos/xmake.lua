@@ -21,13 +21,13 @@ target("demo-cpu")
     end
 target_end()
 
--- target("demo-vulkan")
---     set_kind("binary")
---     add_includedirs("$(projectdir)/include")
---     add_files("vulkan/main.cpp")
---     add_packages("volk", "spdlog")
---     if is_plat("android") then on_run(run_on_android) end
--- target_end()
+target("demo-vulkan")
+    set_kind("binary")
+    add_includedirs("$(projectdir)/include")
+    add_files("vulkan/main.cpp")
+    add_packages("volk", "spdlog")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()
 
 target("demo-zheyuan-vulkan")
     set_kind("binary")

@@ -17,14 +17,14 @@ target("test-vulkan")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
 
-if not is_plat("android") then
-target("test-cuda")
-    set_kind("binary")
-    add_files("foundations/test-cuda.cu")
-    add_packages("gtest")
-    add_cugencodes("native")
-target_end()
-end
+-- if not is_plat("android") then
+-- target("test-cuda")
+--     set_kind("binary")
+--     add_files("foundations/test-cuda.cu")
+--     add_packages("gtest")
+--     add_cugencodes("native")
+-- target_end()
+-- end
 
 target("test-threadpool")
     set_kind("binary")
