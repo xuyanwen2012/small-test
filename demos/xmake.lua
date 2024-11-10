@@ -29,40 +29,40 @@ target("demo-vulkan")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
 
-target("demo-zheyuan-vulkan")
-    set_kind("binary")
-    add_files("zheyuan-vulkan/main.cpp")
-    add_includedirs("$(projectdir)/include")
-    add_packages("glm", "volk", "vulkan-headers", "vulkan-validationlayers", "spdlog")
-    -- add_deps("ppl-vulkan")
-    if is_plat("android") then on_run(run_on_android) end
-target_end()
+-- target("demo-zheyuan-vulkan")
+--     set_kind("binary")
+--     add_files("zheyuan-vulkan/main.cpp")
+--     add_includedirs("$(projectdir)/include")
+--     add_packages("glm", "volk", "vulkan-headers", "vulkan-validationlayers", "spdlog")
+--     -- add_deps("ppl-vulkan")
+--     if is_plat("android") then on_run(run_on_android) end
+-- target_end()
 
-target("demo-yanwen-vulkan")
-    set_kind("binary")
-    add_files("yanwen-vulkan/*.cpp")
-    add_headerfiles("yanwen-vulkan/*.hpp")
-    add_includedirs("$(projectdir)/include")
-    add_packages("glm", "spdlog", "volk", "vulkan-memory-allocator")
-    if is_plat("android") then on_run(run_on_android) end
-target_end()
+-- target("demo-yanwen-vulkan")
+--     set_kind("binary")
+--     add_files("yanwen-vulkan/*.cpp")
+--     add_headerfiles("yanwen-vulkan/*.hpp")
+--     add_includedirs("$(projectdir)/include")
+--     add_packages("glm", "spdlog", "volk", "vulkan-memory-allocator")
+--     if is_plat("android") then on_run(run_on_android) end
+-- target_end()
 
-target("demo-vma-class")
-    set_kind("binary")
-    add_files("vma-class/*.cpp")
-    add_headerfiles("vma-class/*.hpp")
-    add_includedirs("$(projectdir)/include")
-    add_packages("volk","vulkan-memory-allocator", "spdlog")
-    if is_plat("android") then on_run(run_on_android) end
-target_end()
+-- target("demo-vma-class")
+--     set_kind("binary")
+--     add_files("vma-class/*.cpp")
+--     add_headerfiles("vma-class/*.hpp")
+--     add_includedirs("$(projectdir)/include")
+--     add_packages("volk","vulkan-memory-allocator", "spdlog")
+--     if is_plat("android") then on_run(run_on_android) end
+-- target_end()
 
-target("demo-vma")
-    set_kind("binary")
-    add_files("vma/main.cpp")
-    add_includedirs("$(projectdir)/include")
-    add_packages("volk", "vulkan-memory-allocator", "spdlog")
-    if is_plat("android") then on_run(run_on_android) end
-target_end()
+-- target("demo-vma")
+--     set_kind("binary")
+--     add_files("vma/main.cpp")
+--     add_includedirs("$(projectdir)/include")
+--     add_packages("volk", "vulkan-memory-allocator", "spdlog")
+--     if is_plat("android") then on_run(run_on_android) end
+-- target_end()
 
 target("demo-vma-debug")
     set_kind("binary")

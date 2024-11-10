@@ -3,15 +3,19 @@
 #include <sched.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <span>
-#include <string_view>
 #include <thread>
 #include <vector>
+
+#if defined(__ANDROID__)
+#include <chrono>
+#include <string_view>
+#endif
 
 #include "configs.hpp"
 
