@@ -16,6 +16,10 @@ int main() {
     auto buf2 = engine.buffer(n * sizeof(int));
     auto buf3 = engine.buffer(n * sizeof(int));
 
+    std::ranges::fill(buf->span<int>(), 1);
+    std::ranges::fill(buf2->span<int>(), 2);
+    std::ranges::fill(buf3->span<int>(), 0);
+
     constexpr auto threads_per_block = 32;
 
     Algorithm algo(engine.get_device(),
@@ -30,7 +34,14 @@ int main() {
 
     seq.simple_record_commands(algo, n);
     seq.launch_kernel_async();
+
     seq.sync();
+
+    // print the result
+    int* data = buf3->map<int>();
+    for (auto i = 0; i < 128; i++) {
+      spdlog::info("data[{}] = {}", i, data[i]);
+    }
   }
 
   spdlog::info("Done!");

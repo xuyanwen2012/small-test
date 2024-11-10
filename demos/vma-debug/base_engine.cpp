@@ -104,14 +104,28 @@ void BaseEngine::initialize_device() {
   // print the name of the physical device
   spdlog::info("Physical device: {}", deviceProperties.deviceName);
 
-  // // Create a logical device
-  // constexpr float queue_priority = 1.0f;
-  // const VkDeviceQueueCreateInfo queue_create_info{
-  //     .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-  //     .queueFamilyIndex = 0,  // assume
-  //     .queueCount = 1,
-  //     .pQueuePriorities = &queue_priority,
-  // };
+  // Add this before device creation
+  uint32_t queue_family_count = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      physical_device_, &queue_family_count, nullptr);
+  std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+  vkGetPhysicalDeviceQueueFamilyProperties(
+      physical_device_, &queue_family_count, queue_families.data());
+
+  // Find queue family with compute support
+  bool found = false;
+  for (uint32_t i = 0; i < queue_family_count; i++) {
+    if (queue_families[i].queueFlags & VK_QUEUE_COMPUTE_BIT) {
+      compute_queue_index_ = i;
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    throw std::runtime_error(
+        "Could not find a queue family that supports compute operations");
+  }
 
   // Create a logical device (compute queue)
   constexpr float queue_priority = 1.0f;
@@ -137,7 +151,13 @@ void BaseEngine::initialize_device() {
 
   volkLoadDevice(device_);
 
+  vkGetDeviceQueue(device_, compute_queue_index_, 0, &queue_);
+
   spdlog::info("Vulkan instance and device created successfully!");
+
+  // print some information about what we created
+  spdlog::info("\tQueue family index: {}", compute_queue_index_);
+  spdlog::info("\tQueue: {}", (uint64_t)queue_);
 }
 
 void BaseEngine::vma_initialization() {

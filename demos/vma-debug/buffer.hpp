@@ -1,6 +1,8 @@
 #pragma once
 
-#include <cstddef>
+// #include <cstddef>
+
+#include <span>
 
 #include "base_engine.hpp"
 #include "vk_mem_alloc.h"
@@ -26,6 +28,18 @@ class Buffer {
 
   [[nodiscard]] VkDescriptorBufferInfo construct_descriptor_buffer_info() const;
 
+  template <typename T>
+  [[nodiscard]] T* map() {
+    return reinterpret_cast<T*>(mapped_data_);
+  }
+
+  // write helper function using std::span to easily read/write to the buffer.
+  // Can we not use memcpy??
+  template <typename T>
+  std::span<T> span() {
+    return std::span<T>(map<T>(), size_ / sizeof(T));
+  }
+
  private:
   VkDevice device_ = VK_NULL_HANDLE;
 
@@ -37,7 +51,7 @@ class Buffer {
   VkDeviceSize size_ = 0;
 
   // Raw pointer to the mapped data, CPU/GPU shared memory.
-  std::byte *mapped_data_ = nullptr;
+  std::byte* mapped_data_ = nullptr;
 
   bool persistent_ = true;
 };
