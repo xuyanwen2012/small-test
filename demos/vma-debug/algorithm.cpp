@@ -253,12 +253,27 @@ void Algorithm::create_pipeline() {
   spdlog::debug("Pipeline created successfully");
 }
 
+// void Algorithm::create_shader_module() {
+//   const auto spirv_binary = load_shader_from_file(spirv_filename_);
+
+//   VkShaderModuleCreateInfo create_info{
+//       .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+//       .codeSize = spirv_binary.size(),
+//       .pCode = reinterpret_cast<const uint32_t *>(spirv_binary.data()),
+//   };
+
+//   check_vk_result(
+//       vkCreateShaderModule(device_, &create_info, nullptr, &shader_module_));
+
+//   spdlog::debug("Shader module created successfully");
+// }
+
 void Algorithm::create_shader_module() {
   const auto spirv_binary = load_shader_from_file(spirv_filename_);
 
-  VkShaderModuleCreateInfo create_info{
+  const VkShaderModuleCreateInfo create_info{
       .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-      .codeSize = spirv_binary.size(),
+      .codeSize = spirv_binary.size() * sizeof(uint32_t),
       .pCode = reinterpret_cast<const uint32_t *>(spirv_binary.data()),
   };
 

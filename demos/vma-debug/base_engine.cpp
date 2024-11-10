@@ -27,6 +27,29 @@ void BaseEngine::initialize_device() {
     return;
   }
 
+  // Add validation layer check
+  constexpr const char* validation_layer_name = "VK_LAYER_KHRONOS_validation";
+  bool validation_layers_available = false;
+
+  uint32_t layer_count;
+  vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+  std::vector<VkLayerProperties> available_layers(layer_count);
+  vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
+
+  for (const auto& layer : available_layers) {
+    if (strcmp(validation_layer_name, layer.layerName) == 0) {
+      validation_layers_available = true;
+      break;
+    }
+  }
+
+  if (validation_layers_available) {
+    spdlog::info("Validation layer {} is available", validation_layer_name);
+  } else {
+    spdlog::warn("Validation layer {} not available, continuing without it",
+                 validation_layer_name);
+  }
+
   // Create Vulkan instance
   constexpr VkApplicationInfo app_info{
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -37,9 +60,15 @@ void BaseEngine::initialize_device() {
       .apiVersion = VK_API_VERSION_1_3,
   };
 
-  const VkInstanceCreateInfo create_info{
+  // Modify instance creation info to include validation layer if available
+  const char* enabled_layers[] = {validation_layer_name};
+
+  VkInstanceCreateInfo create_info{
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pApplicationInfo = &app_info,
+      .enabledLayerCount = validation_layers_available ? 1u : 0u,
+      .ppEnabledLayerNames =
+          validation_layers_available ? enabled_layers : nullptr,
   };
 
   if (vkCreateInstance(&create_info, nullptr, &instance_) != VK_SUCCESS) {
