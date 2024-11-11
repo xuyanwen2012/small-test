@@ -143,6 +143,15 @@ int main(int argc, char** argv) {
     for (auto i = 0; i < 10; ++i) {
       spdlog::info("Morton code {}: {}", i, morton_span[i]);
     }
+
+    // ---- CPU sort ---
+
+    std::ranges::sort(morton_span);
+
+    // print 10 results
+    for (auto i = 0; i < 10; ++i) {
+      spdlog::info("Sorted Morton code {}: {}", i, morton_span[i]);
+    }
   }
 
   spdlog::info("Done!");
