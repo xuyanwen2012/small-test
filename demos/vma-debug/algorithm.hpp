@@ -20,7 +20,7 @@ class Algorithm : public VulkanResource<VkShaderModule> {
         spirv_filename_(spirv_filename),
         usm_buffers_(buffers),
         threads_per_block_(threads_per_block) {
-    spdlog::info(
+    spdlog::debug(
         "Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
         spirv_filename_,
         buffers.size());
@@ -35,7 +35,7 @@ class Algorithm : public VulkanResource<VkShaderModule> {
   }
 
   ~Algorithm() override {
-    spdlog::info("Algorithm::~Algorithm()");
+    spdlog::debug("Algorithm::~Algorithm()");
     destroy();
   }
 

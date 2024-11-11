@@ -153,11 +153,11 @@ void BaseEngine::initialize_device() {
 
   vkGetDeviceQueue(device_, compute_queue_index_, 0, &queue_);
 
-  spdlog::info("Vulkan instance and device created successfully!");
+  spdlog::debug("Vulkan instance and device created successfully!");
 
   // print some information about what we created
-  spdlog::info("\tQueue family index: {}", compute_queue_index_);
-  spdlog::info("\tQueue: {}", (uint64_t)queue_);
+  spdlog::debug("\tQueue family index: {}", compute_queue_index_);
+  spdlog::debug("\tQueue: {}", (uint64_t)queue_);
 }
 
 void BaseEngine::vma_initialization() {
@@ -180,5 +180,5 @@ void BaseEngine::vma_initialization() {
     return;
   }
 
-  spdlog::info("VMA allocator created successfully!");
+  spdlog::debug("VMA allocator created successfully!");
 }

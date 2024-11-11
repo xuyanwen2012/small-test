@@ -6,9 +6,19 @@
 #include "buffer.hpp"
 #include "engine.hpp"
 #include "sequence.hpp"
+#include "third-party/CLI11.hpp"
 
-int main() {
-  spdlog::set_level(spdlog::level::debug);
+int main(int argc, char** argv) {
+  CLI::App app{"VMA Debug"};
+
+  // allow extra
+  bool debug = false;
+  app.add_flag("--debug", debug, "Enable debug mode");
+  app.allow_extras();
+
+  CLI11_PARSE(app, argc, argv);
+
+  spdlog::set_level(debug ? spdlog::level::debug : spdlog::level::info);
 
   {
     Engine engine;
@@ -39,7 +49,7 @@ int main() {
 
     // print the first 128 results
     for (auto i : buf3->span<int>().subspan(0, 128)) {
-      spdlog::info("{}", i);
+      spdlog::debug("{}", i);
     }
   }
 
