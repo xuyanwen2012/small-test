@@ -194,6 +194,7 @@ void Algorithm::create_shader_module() {
   spdlog::debug("Shader module created successfully");
 }
 
+// this method send the buffer data to the shader
 void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
   spdlog::debug("Algorithm::record_bind_core()");
 
@@ -208,6 +209,7 @@ void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
                           nullptr);
 }
 
+// this method send the push constants to the shader
 void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
   spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
                 push_constants_size_ * push_constants_data_type_memory_size_);
@@ -221,9 +223,28 @@ void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
       push_constants_data_);
 }
 
+// this method dispatch the kernel with the number of blocks based on the input
+// size. It will use as much blocks as needed to cover the input size.
 void Algorithm::record_dispatch_tmp(VkCommandBuffer cmd_buf, uint32_t n) const {
-  spdlog::debug("Algorithm::record_dispatch_tmp, n: {}", n);
-
   const auto num_blocks = (n + threads_per_block_ - 1u) / threads_per_block_;
+
+  spdlog::debug(
+      "Algorithm::record_dispatch_tmp, trying to CmdDispatch with input size, "
+      "n: {}, threads_per_block: {}, num_blocks: ({}, {}, {})",
+      n,
+      threads_per_block_,
+      num_blocks,
+      1u,
+      1u);
+
   vkCmdDispatch(cmd_buf, num_blocks, 1u, 1u);
+}
+
+// this method dispatch the kernel with the number of blocks provided.
+void Algorithm::record_dispatch_with_blocks(VkCommandBuffer cmd_buf,
+                                            uint32_t n_blocks) const {
+  spdlog::debug("Algorithm::record_dispatch_with_blocks, n_blocks: {}",
+                n_blocks);
+
+  vkCmdDispatch(cmd_buf, n_blocks, 1u, 1u);
 }

@@ -51,14 +51,20 @@ class Algorithm : public VulkanResource<VkShaderModule> {
                           uint32_t size,
                           uint32_t type_memory_size);
 
-  // Let the cmd_buffer to bind my pipeline and descriptor set.
+  // this method send the pipeline and descriptor set to the shader (basically
+  // send the data in buffer to shader)
   void record_bind_core(VkCommandBuffer cmd_buf) const;
 
-  // Let the cmd_buffer to bind my push constants.
+  // this method send the push constants to the shader
   void record_bind_push(VkCommandBuffer cmd_buf) const;
 
-  // Let the cmd_buffer to dispatch my kernel (compute shader).
+  // this method dispatch the kernel with the number of blocks based on the
+  // input size. It will use as much blocks as needed to cover the input size.
   void record_dispatch_tmp(VkCommandBuffer cmd_buf, uint32_t n) const;
+
+  // this method dispatch the kernel with the number of blocks provided.
+  void record_dispatch_with_blocks(VkCommandBuffer cmd_buf,
+                                   uint32_t n_blocks) const;
 
  private:
   // L1

@@ -42,12 +42,15 @@ int main(int argc, char** argv) {
     // layout(local_size_x = 512) in;
 
     auto buf = engine.buffer(n * sizeof(glm::vec4));
+    buf->zeros();
 
-    auto algo = engine.algorithm(
-        "init.spv", {buf}, num_blocks, {n, min_val, range, seed});
+    auto algo =
+        engine.algorithm("init.spv", {buf}, 512, {n, min_val, range, seed});
 
     auto seq = engine.sequence();
-    seq->simple_record_commands(algo.get(), n);
+
+    seq->record_commands_with_blocks(algo.get(), num_blocks);
+
     seq->launch_kernel_async();
     seq->sync();
 

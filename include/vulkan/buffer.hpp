@@ -39,6 +39,20 @@ class Buffer : public VulkanResource<VkBuffer> {
     return std::span<T>(map<T>(), size_ / sizeof(T));
   }
 
+  // fill the buffer with the given value
+  template <typename T>
+  void fill(const T& value) {
+    std::memset(map<T>(), value, size_);
+  }
+
+  void zeros() { fill(0); }
+
+  // ---------------------------------------------------------------------------
+  // getters
+  // ---------------------------------------------------------------------------
+
+  [[nodiscard]] VkDeviceSize get_size() const { return size_; }
+
  private:
   // Vulkan Memory Allocator components
   VmaAllocation allocation_ = VK_NULL_HANDLE;

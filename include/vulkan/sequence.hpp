@@ -45,6 +45,15 @@ class Sequence : public VulkanResource<VkCommandBuffer> {
     cmd_end();
   }
 
+  void record_commands_with_blocks(const Algorithm *algo,
+                                   const uint32_t n_blocks) const {
+    cmd_begin();
+    algo->record_bind_core(this->get_handle());
+    algo->record_bind_push(this->get_handle());
+    algo->record_dispatch_with_blocks(this->get_handle(), n_blocks);
+    cmd_end();
+  }
+
   /**
    * @brief Once all commands are recorded, you can launch the kernel. It will
    * submit all the commands to the GPU. It is asynchronous, so you can do other
