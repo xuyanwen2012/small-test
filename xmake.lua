@@ -1,6 +1,7 @@
 set_project("small-test")
 set_version("0.1.0")
 
+-- Build rules
 add_rules("mode.debug", "mode.release")
 set_languages("c++20")
 set_warnings("allextra")
@@ -36,11 +37,10 @@ add_requires("spdlog")
 add_requires("gtest 1.15.*", {alias = "gtest"})
 add_requires("benchmark 1.9.*", {alias = "benchmark"})
 
-
--- Vulkan requires
+-- Vulkan requirements
 add_requires("vulkan-headers", "volk")
--- add_requires("vulkan-validationlayers")
 add_requires("vulkan-memory-allocator")
+-- add_requires("vulkan-validationlayers")
 
 local ANDROID_CONFIG = {
     ignored_devices = {"ZY22FLDDK7"},

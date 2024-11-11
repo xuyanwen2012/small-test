@@ -47,3 +47,12 @@ target("demo-vma-debug")
     add_packages("spdlog", "volk", "vulkan-memory-allocator")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
+
+target("demo-vulkan")
+    set_kind("binary")
+    add_includedirs("$(projectdir)/include")
+    add_files("vulkan/*.cpp")
+    add_deps("ppl-vulkan")
+    add_packages("glm", "spdlog", "volk", "vulkan-memory-allocator")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()
