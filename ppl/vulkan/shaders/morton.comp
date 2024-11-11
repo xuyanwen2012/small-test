@@ -1,10 +1,4 @@
 #version 450
-#extension GL_KHR_shader_subgroup_basic : enable
-#extension GL_KHR_shader_subgroup_ballot : enable
-#extension GL_KHR_shader_subgroup_arithmetic : enable
-#extension GL_KHR_shader_subgroup_vote : enable
-
-// #define input_size 2000000
 
 layout(set = 0, binding = 0) buffer Data { vec4 data[]; };
 
@@ -45,7 +39,9 @@ uint single_point_to_code_v2(
 void k_ComputeMortonCode() {
   const uint idx =
       gl_LocalInvocationID.x + gl_WorkGroupSize.x * gl_WorkGroupID.x;
+  
   const uint stride = gl_WorkGroupSize.x * gl_NumWorkGroups.x;
+
   for (uint i = idx; i < n; i += stride) {
     morton_keys[i] = single_point_to_code_v2(
         data[i].x, data[i].y, data[i].z, min_coord, range);
