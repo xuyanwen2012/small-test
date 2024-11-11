@@ -38,19 +38,19 @@ Buffer::Buffer(VkDevice device,
   }
 
   // log the allocation info
-  spdlog::info("\tsize: {}", allocation_info.size);
-  spdlog::info("\toffset: {}", allocation_info.offset);
-  spdlog::info("\tmemoryType: {}", allocation_info.memoryType);
-  spdlog::info("\tmappedData: {}", allocation_info.pMappedData);
+  spdlog::debug("\tsize: {}", allocation_info.size);
+  spdlog::debug("\toffset: {}", allocation_info.offset);
+  spdlog::debug("\tmemoryType: {}", allocation_info.memoryType);
+  spdlog::debug("\tmappedData: {}", allocation_info.pMappedData);
 
   memory_ = static_cast<VkDeviceMemory>(allocation_info.deviceMemory);
   mapped_data_ = static_cast<std::byte *>(allocation_info.pMappedData);
 
-  // write something to the mapped data
-  std::memset(mapped_data_, 0x42, size);
+  // // write something to the mapped data
+  // std::memset(mapped_data_, 0x42, size);
 
-  // read something from the mapped data
-  spdlog::info("mapped_data_[0]: {}", static_cast<int>(mapped_data_[0]));
+  // // read something from the mapped data
+  // spdlog::debug("mapped_data_[0]: {}", static_cast<int>(mapped_data_[0]));
 }
 
 Buffer::~Buffer() {

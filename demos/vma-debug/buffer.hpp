@@ -33,8 +33,6 @@ class Buffer {
     return reinterpret_cast<T*>(mapped_data_);
   }
 
-  // write helper function using std::span to easily read/write to the buffer.
-  // Can we not use memcpy??
   template <typename T>
   std::span<T> span() {
     return std::span<T>(map<T>(), size_ / sizeof(T));
