@@ -93,6 +93,7 @@ int main(int argc, char** argv) {
     auto init_data = engine.buffer(n * sizeof(glm::vec4));
     init_data->zeros();
 
+    // Step 1: Initialize the data
     struct {
       int n;
       int min_val;
@@ -118,6 +119,7 @@ int main(int argc, char** argv) {
       spdlog::info("{}: {}", i, init_span[i]);
     }
 
+    // Step 2: Compute the Morton code
     auto morton_buf = engine.buffer(n * sizeof(uint32_t));
     morton_buf->zeros();
 
@@ -144,13 +146,143 @@ int main(int argc, char** argv) {
       spdlog::info("Morton code {}: {}", i, morton_span[i]);
     }
 
-    // ---- CPU sort ---
-
+    // Step 3: Sort the Morton code (currently CPU)
     std::ranges::sort(morton_span);
 
     // print 10 results
     for (auto i = 0; i < 10; ++i) {
       spdlog::info("Sorted Morton code {}: {}", i, morton_span[i]);
+    }
+
+    // // Step 4: Compute the unique Morton code
+    // auto contributes_buf = engine.buffer(n * sizeof(uint32_t));
+    // contributes_buf->zeros();
+
+    // struct {
+    //   int n;
+    // } find_dups_push_constants = {n};
+
+    // auto find_dups_algo = engine.algorithm(
+    //     "find_dups.spv",
+    //     {contributes_buf, morton_buf},
+    //     256,
+    //     reinterpret_cast<const std::byte*>(&find_dups_push_constants),
+    //     sizeof(find_dups_push_constants));
+
+    // seq->record_commands_with_blocks(find_dups_algo.get(), num_blocks);
+    // seq->launch_kernel_async();
+    // seq->sync();
+
+    // auto out_keys_buf = engine.buffer(n * sizeof(uint32_t));
+    // out_keys_buf->zeros();
+
+    // auto out_idx_buf = engine.buffer(n * sizeof(uint32_t));
+    // out_idx_buf->zeros();
+
+    // // Step 4.5: Move the duplicates
+    // struct {
+    //   int n;
+    // } move_dups_push_constants = {n};
+
+    // auto move_dups_algo = engine.algorithm(
+    //     "move_dups.spv",
+    //     {contributes_buf, morton_buf, out_keys_buf, out_idx_buf},
+    //     256,
+    //     reinterpret_cast<const std::byte*>(&move_dups_push_constants),
+    //     sizeof(move_dups_push_constants));
+
+    // seq->record_commands_with_blocks(move_dups_algo.get(), num_blocks);
+    // seq->launch_kernel_async();
+    // seq->sync();
+
+    // // print 10 results
+    // auto out_keys_span = out_keys_buf->span<uint32_t>();
+    // for (auto i = 0; i < 10; ++i) {
+    //   spdlog::info("Out keys {}: {}", i, out_keys_span[i]);
+    // }
+
+    auto unique_morton = engine.buffer(n * sizeof(uint32_t));
+    unique_morton->zeros();
+
+    std::unique_copy(morton_span.begin(),
+                     morton_span.end(),
+                     unique_morton->span<uint32_t>().begin());
+    const auto n_unique = std::distance(unique_morton->span<uint32_t>().begin(),
+                                        unique_morton->span<uint32_t>().end());
+
+    // print 10 results
+    auto unique_morton_span = unique_morton->span<uint32_t>();
+    for (auto i = 0; i < 10; ++i) {
+      spdlog::info("Unique Morton code {}: {}", i, unique_morton_span[i]);
+    }
+
+    spdlog::info("n_unique: {}", n_unique);
+
+    // Step 5: Radix tree build
+
+    //     layout(push_constant) uniform N { int n; };
+
+    // layout(set = 0, binding = 0) buffer Codes { uint codes[]; };
+
+    // layout(set = 0, binding = 1) buffer PrefixN { uint8_t prefix_n[]; };
+
+    // layout(set = 0, binding = 2) buffer HasLeafLeft { bool has_leaf_left[];
+    // };
+
+    // layout(set = 0, binding = 3) buffer HasLeafRight { bool has_leaf_right[];
+    // };
+
+    // layout(set = 0, binding = 4) buffer LeftChild { int left_child[]; };
+
+    // layout(set = 0, binding = 5) buffer Parent { int parent[]; };
+
+    // layout(local_size_x = 256) in;
+
+    auto prefix_n_buf = engine.buffer(n_unique * sizeof(uint8_t));
+    prefix_n_buf->zeros();
+
+    auto has_leaf_left_buf = engine.buffer(n_unique * sizeof(bool));
+    has_leaf_left_buf->zeros();
+
+    auto has_leaf_right_buf = engine.buffer(n_unique * sizeof(bool));
+    has_leaf_right_buf->zeros();
+
+    auto left_child_buf = engine.buffer(n_unique * sizeof(int));
+    left_child_buf->zeros();
+
+    auto parent_buf = engine.buffer(n_unique * sizeof(int));
+    parent_buf->zeros();
+
+    struct {
+      int n;
+    } build_radix_tree_push_constants = {static_cast<int>(n_unique)};
+
+    auto build_radix_tree_algo = engine.algorithm(
+        "build_radix_tree.spv",
+        {unique_morton,
+         prefix_n_buf,
+         has_leaf_left_buf,
+         has_leaf_right_buf,
+         left_child_buf,
+         parent_buf},
+        256,
+        reinterpret_cast<const std::byte*>(&build_radix_tree_push_constants),
+        sizeof(build_radix_tree_push_constants));
+
+    seq->record_commands_with_blocks(build_radix_tree_algo.get(), num_blocks);
+    seq->launch_kernel_async();
+    seq->sync();
+
+    // print 10 results
+    auto prefix_n_span = prefix_n_buf->span<uint8_t>();
+    for (auto i = 0; i < 10; ++i) {
+      spdlog::info("\tPrefix N {}: {}", i, prefix_n_span[i]);
+      spdlog::info(
+          "\tHas leaf left {}: {}", i, has_leaf_left_buf->span<bool>()[i]);
+      spdlog::info(
+          "\tHas leaf right {}: {}", i, has_leaf_right_buf->span<bool>()[i]);
+      spdlog::info("\tLeft child {}: {}", i, left_child_buf->span<int>()[i]);
+      spdlog::info("\tParent {}: {}", i, parent_buf->span<int>()[i]);
     }
   }
 
