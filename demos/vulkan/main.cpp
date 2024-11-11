@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 
   Engine engine;
 
-  constexpr int n = 50000;
+  constexpr int n = 1024;
   constexpr int min_val = 0;
   constexpr int range = 1;
   constexpr int seed = 114514;
