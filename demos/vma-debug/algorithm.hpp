@@ -84,10 +84,7 @@ class Algorithm : public VulkanResource<VkShaderModule> {
 
   std::string spirv_filename_;
 
-  // VkDevice device_ = VK_NULL_HANDLE;
-
   // Vulkan components
-  // VkShaderModule shader_module_ = VK_NULL_HANDLE;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
