@@ -11,11 +11,12 @@ class Algorithm : public VulkanResource<VkShaderModule> {
  public:
   Algorithm() = delete;
 
+  template <typename T>
   explicit Algorithm(std::shared_ptr<VkDevice> device_ptr,
                      std::string_view spirv_filename,
                      const std::vector<std::shared_ptr<Buffer>> &buffers,
                      uint32_t threads_per_block,
-                     const std::vector<float> &push_constants = {})
+                     const std::vector<T> &push_constants = {})
       : VulkanResource<VkShaderModule>(std::move(device_ptr)),
         spirv_filename_(spirv_filename),
         usm_buffers_(buffers),

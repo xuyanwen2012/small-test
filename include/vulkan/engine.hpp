@@ -23,11 +23,12 @@ class Engine final : public BaseEngine {
     return buf;
   }
 
+  template <typename T>
   [[nodiscard]] auto algorithm(
       const std::string &spirv_filename,
       const std::vector<std::shared_ptr<Buffer>> &buffers,
       uint32_t threads_per_block,
-      const std::vector<float> &push_constants = {})
+      const std::vector<T> &push_constants = {})
       -> std::shared_ptr<Algorithm> {
     auto algo = std::make_shared<Algorithm>(this->get_device_ptr(),
                                             spirv_filename,
