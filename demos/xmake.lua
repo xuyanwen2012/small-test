@@ -51,6 +51,6 @@ target("demo-vma-debug")
     add_includedirs("$(projectdir)/include")
     add_files("vma-debug/*.cpp")
     add_deps("ppl-vulkan")
-    add_packages("spdlog")
+    add_packages("spdlog", "volk", "vulkan-memory-allocator")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
