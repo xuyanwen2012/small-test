@@ -1,10 +1,4 @@
 #version 450
-// #extension GL_KHR_shader_subgroup_basic : enable
-// #extension GL_KHR_shader_subgroup_ballot : enable
-// #extension GL_KHR_shader_subgroup_arithmetic : enable
-// #extension GL_KHR_shader_subgroup_vote : enable
-
-// #define input_size 2000000
 
 #define TAUS_STEP_1 (((z1 & 4294967294U) << 12) ^ (((z1 << 13) ^ z1) >> 19))
 #define TAUS_STEP_2 (((z2 & 4294967288U) << 4) ^ (((z2 << 2) ^ z2) >> 25))
@@ -19,7 +13,8 @@ layout(push_constant) uniform PushConstant {
   int min_val;
   int range;
   int seed;
-};
+}
+push_constant;
 
 layout(local_size_x = 512) in;
 
@@ -28,24 +23,42 @@ float uint_to_float(uint x) { return (float(x & 0xFFFFFF) / 16777216.0); }
 float uint_to_float_scaled(uint x, float min_val, float range) {
   return min_val + uint_to_float(x) * range;
 }
+
 void Init() {
   const uint idx =
       gl_LocalInvocationID.x + gl_WorkGroupSize.x * gl_WorkGroupID.x;
 
-  uint z1 = (idx << 2) * seed;
-  uint z2 = ((idx << 2) + 1) * seed;
-  uint z3 = ((idx << 2) + 2) * seed;
-  uint z4 = ((idx << 2) + 3) * seed;
+  // if (idx < push_constant.size) {
+  //   random_buffer[idx] = vec4(gl_LocalInvocationID.x,
+  //                              gl_WorkGroupSize.x,
+  //                              gl_WorkGroupID.x,
+  //                              gl_GlobalInvocationID.x);
+  // }
 
-  for (uint i = idx; i < size; i += gl_WorkGroupSize.x * gl_NumWorkGroups.x) {
+  uint z1 = (idx << 2) * push_constant.seed;
+  uint z2 = ((idx << 2) + 1) * push_constant.seed;
+  uint z3 = ((idx << 2) + 2) * push_constant.seed;
+  uint z4 = ((idx << 2) + 3) * push_constant.seed;
+
+  // for (uint i = idx; i < push_constant.size; i += gl_WorkGroupSize.x *
+  // gl_NumWorkGroups.x) {
+
+  // uint i = idx;
+
+  if (idx < push_constant.size) {
     z1 = TAUS_STEP_1;
     z2 = TAUS_STEP_2;
     z3 = TAUS_STEP_3;
     z4 = LCG_STEP;
-    random_buffer[i] = vec4(uint_to_float_scaled(z1 ^ z2, min_val, range),
-                            uint_to_float_scaled(z2 ^ z3, min_val, range),
-                            uint_to_float_scaled(z3 ^ z4, min_val, range),
-                            uint_to_float_scaled(z1 ^ z4, min_val, range));
+    random_buffer[idx] =
+        vec4(uint_to_float_scaled(
+                 z1 ^ z2, push_constant.min_val, push_constant.range),
+             uint_to_float_scaled(
+                 z2 ^ z3, push_constant.min_val, push_constant.range),
+             uint_to_float_scaled(
+                 z3 ^ z4, push_constant.min_val, push_constant.range),
+             uint_to_float_scaled(
+                 z1 ^ z4, push_constant.min_val, push_constant.range));
   }
 }
 

@@ -14,7 +14,24 @@ namespace fs = std::filesystem;
 #ifdef __ANDROID__
 constexpr std::string shader_base_path = "/data/local/tmp";
 #else
-const std::string shader_base_path = fs::current_path().string();
+// const std::string shader_base_path = fs::current_path().string();
+
+// build/
+// └── linux
+//     └── x86_64
+//         └── debug
+//             ├── bench-cpu-pinned
+//
+
+// and then "(project root)/ppl/vulkan/shaders/compiled_shaders/"
+const std::string shader_base_path = fs::current_path()
+                                         .parent_path()
+                                         .parent_path()
+                                         .parent_path()
+                                         .parent_path()
+                                         .string() +
+                                     "/ppl/vulkan/shaders/compiled_shaders/";
+
 #endif
 
 // SPIR-V shader files start with this magic number (0x07230203)

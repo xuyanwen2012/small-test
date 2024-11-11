@@ -51,9 +51,9 @@ int main(int argc, char** argv) {
     seq->launch_kernel_async();
     seq->sync();
 
-    // print the first 10 elements
+    // print results
     auto span = buf->span<glm::vec4>();
-    for (auto i = 0; i < 10; ++i) {
+    for (auto i = 0; i < n; ++i) {
       spdlog::info("{}: {}", i, span[i]);
     }
   }

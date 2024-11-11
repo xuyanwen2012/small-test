@@ -50,17 +50,23 @@ target_end()
 
 
 function compile_shaders()
-    -- Get all the .comp shaders from the source folder
     local shader_files = os.files("$(projectdir)/ppl/vulkan/shaders/*.comp")
 
-    -- Loop over the shader files and compile them
     for _, shader_file in ipairs(shader_files) do
         local output_path = "$(projectdir)/ppl/vulkan/shaders/compiled_shaders/" .. path.basename(shader_file) .. ".spv"
+        -- local command = "glslangValidator --target-env vulkan1.2 -e main -o " .. output_path .. " " .. shader_file
         local command = "glslangValidator -V --target-env spirv1.3 " .. shader_file .. " -o " .. output_path
         os.run(command)
         print(string.format("Compiled %s to %s", shader_file, output_path))
     end
 end
+
+-- function copy_shaders(target)
+--     local shader_dir = "$(projectdir)/ppl/vulkan/shaders/compiled_shaders"
+--     -- local remote_path = "/data/local/tmp/shaders"
+--     -- local remote_path = -- target's exe
+--     os.run("adb push " .. shader_dir .. " " .. remote_path)
+-- end
 
 target("demo-vulkan")
     set_kind("binary")
