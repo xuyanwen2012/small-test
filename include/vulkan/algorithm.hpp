@@ -34,10 +34,7 @@ class Algorithm : public VulkanResource<VkShaderModule> {
     create_pipeline();
   }
 
-  ~Algorithm() override {
-    spdlog::debug("Algorithm::~Algorithm()");
-    destroy();
-  }
+  ~Algorithm() override { destroy(); }
 
  protected:
   void destroy() override;
@@ -104,4 +101,6 @@ class Algorithm : public VulkanResource<VkShaderModule> {
    * describe work-items per work-group.
    */
   uint32_t threads_per_block_;
+
+  friend class Engine;
 };

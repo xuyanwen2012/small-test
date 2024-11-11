@@ -1,9 +1,9 @@
-#include "buffer.hpp"
+#include "vulkan/buffer.hpp"
 
 #include <spdlog/spdlog.h>
 
-#include "vk_helper.hpp"
 #include "vk_mem_alloc.h"
+#include "vulkan/vk_helper.hpp"
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 

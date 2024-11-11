@@ -40,9 +40,6 @@ class Buffer : public VulkanResource<VkBuffer> {
   }
 
  private:
-  // VkDevice device_ = VK_NULL_HANDLE;
-  // VkBuffer buffer_ = VK_NULL_HANDLE;
-
   // Vulkan Memory Allocator components
   VmaAllocation allocation_ = VK_NULL_HANDLE;
   VkDeviceMemory memory_ = VK_NULL_HANDLE;
@@ -52,4 +49,6 @@ class Buffer : public VulkanResource<VkBuffer> {
   std::byte* mapped_data_ = nullptr;
 
   bool persistent_ = true;
+
+  friend class Engine;
 };

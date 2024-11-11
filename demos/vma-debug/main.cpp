@@ -2,11 +2,11 @@
 
 #include <memory>
 
-#include "algorithm.hpp"
-#include "buffer.hpp"
-#include "engine.hpp"
-#include "sequence.hpp"
 #include "third-party/CLI11.hpp"
+#include "vulkan/algorithm.hpp"
+#include "vulkan/buffer.hpp"
+#include "vulkan/engine.hpp"
+#include "vulkan/sequence.hpp"
 
 int main(int argc, char** argv) {
   CLI::App app{"VMA Debug"};

@@ -1,4 +1,4 @@
-#include "base_engine.hpp"
+#include "vulkan/base_engine.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -12,7 +12,7 @@
 VmaAllocator BaseEngine::vma_allocator;
 
 void BaseEngine::destroy() {
-  spdlog::debug("BaseEngine::destroy");
+  spdlog::debug("BaseEngine::destroy()");
 
   vmaDestroyAllocator(vma_allocator);
   vkDestroyDevice(device_, nullptr);
@@ -20,7 +20,7 @@ void BaseEngine::destroy() {
 }
 
 void BaseEngine::initialize_device() {
-  spdlog::debug("BaseEngine::initialize_device");
+  spdlog::debug("BaseEngine::initialize_device()");
 
   if (volkInitialize() != VK_SUCCESS) {
     spdlog::error("Failed to initialize Volk");

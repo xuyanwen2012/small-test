@@ -1,4 +1,4 @@
-#include "vk_helper.hpp"
+#include "vulkan/vk_helper.hpp"
 
 // Helper function to convert VkResult to a readable string
 [[nodiscard]] const char* VkResultToString(VkResult result) {

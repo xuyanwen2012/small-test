@@ -1,11 +1,13 @@
-#include "algorithm.hpp"
+#include "vulkan/algorithm.hpp"
 
-#include "shader_loader.hpp"
-#include "vk_helper.hpp"
+#include "vulkan/shader_loader.hpp"
+#include "vulkan/vk_helper.hpp"
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 void Algorithm::destroy() {
+  spdlog::debug("Algorithm::destroy()");
+
   vkDestroyShaderModule(*device_ptr_, handle_, nullptr);
   vkDestroyPipeline(*device_ptr_, pipeline_, nullptr);
   vkDestroyPipelineCache(*device_ptr_, pipeline_cache_, nullptr);

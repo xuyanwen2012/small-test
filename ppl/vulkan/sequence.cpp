@@ -1,8 +1,8 @@
-#include "sequence.hpp"
+#include "vulkan/sequence.hpp"
 
 #include <spdlog/spdlog.h>
 
-#include "vk_helper.hpp"
+#include "vulkan/vk_helper.hpp"
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 

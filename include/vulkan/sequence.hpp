@@ -74,4 +74,6 @@ class Sequence : public VulkanResource<VkCommandBuffer> {
   // VkCommandBuffer command_buffer_ = VK_NULL_HANDLE; // the handle
   VkCommandPool command_pool_ = VK_NULL_HANDLE;
   VkFence fence_ = VK_NULL_HANDLE;
+
+  friend class Engine;
 };
