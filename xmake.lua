@@ -124,6 +124,12 @@ end
 
 --
 
+-- -- Set description globally
+-- set_description("Shader compilation project")
+-- local 
+
+
+
 includes("ppl")
 includes("tests")
 includes("demos")
