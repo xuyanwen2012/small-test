@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <span>
 
 #include "base_engine.hpp"
@@ -46,6 +47,7 @@ class Buffer : public VulkanResource<VkBuffer> {
   }
 
   void zeros() { fill(0); }
+  void ones() { fill(1); }
 
   // ---------------------------------------------------------------------------
   // getters

@@ -10,8 +10,12 @@
 int main(int argc, char** argv) {
   CLI::App app{"VMA Debug"};
 
+  // parameters
   bool debug = false;
+  int num_blocks = 1;
+
   app.add_flag("--debug", debug, "Enable debug mode");
+  app.add_option("-b,--blocks", num_blocks, "Number of blocks")->default_val(1);
   app.allow_extras();
 
   CLI11_PARSE(app, argc, argv);
@@ -25,7 +29,12 @@ int main(int argc, char** argv) {
   constexpr int range = 1;
   constexpr int seed = 114514;
 
-  constexpr int num_blocks = 1;
+  // print all parameters and configs
+  spdlog::info("n: {}", n);
+  spdlog::info("min_val: {}", min_val);
+  spdlog::info("range: {}", range);
+  spdlog::info("seed: {}", seed);
+  spdlog::info("num_blocks: {}", num_blocks);
 
   // (1) init kernel
   {
