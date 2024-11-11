@@ -14,7 +14,29 @@ void Algorithm::destroy() {
   vkDestroyPipelineLayout(*device_ptr_, pipeline_layout_, nullptr);
   vkDestroyDescriptorSetLayout(*device_ptr_, descriptor_set_layout_, nullptr);
   vkDestroyDescriptorPool(*device_ptr_, descriptor_pool_, nullptr);
-  free(push_constants_data_);
+
+  if (heterogeneous_push_constants_data_) {
+    delete[] heterogeneous_push_constants_data_;
+  }
+}
+
+void Algorithm::set_push_constants(const std::byte *push_constants_data,
+                                   const uint32_t push_constants_size) {
+  spdlog::debug(
+      "Setting heterogeneous push constants at address: {:#x} with size: {}",
+      reinterpret_cast<std::uintptr_t>(push_constants_data),
+      push_constants_size);
+
+  // delete the previous data if it exists
+  if (heterogeneous_push_constants_data_) {
+    delete[] heterogeneous_push_constants_data_;
+  }
+
+  heterogeneous_push_constants_size_ = push_constants_size;
+  heterogeneous_push_constants_data_ = new std::byte[push_constants_size];
+  std::memcpy(heterogeneous_push_constants_data_,
+              push_constants_data,
+              push_constants_size);
 }
 
 void Algorithm::create_descriptor_pool() {
@@ -99,28 +121,33 @@ void Algorithm::update_descriptor_sets() {
       nullptr);
 }
 
-void Algorithm::set_push_constants(const void *data,
-                                   const uint32_t size,
-                                   const uint32_t type_memory_size) {
-  spdlog::debug("Setting push constants with size: {} and type memory size: {}",
-                size,
-                type_memory_size);
+// [[deprecated("Use set_heterogeneous_push_constants instead")]] void
+// Algorithm::set_push_constants(const void *data,
+//                               const uint32_t size,
+//                               const uint32_t type_memory_size) {
+//   // spdlog::debug("Setting push constants with size: {} and type memory
+//   size:
+//   // {}",
+//   //               size,
+//   //               type_memory_size);
 
-  const uint32_t total_size = size * type_memory_size;
+//   // const uint32_t total_size = size * type_memory_size;
 
-  push_constants_data_ = malloc(total_size);
-  std::memcpy(push_constants_data_, data, total_size);
+//   // push_constants_data_ = malloc(total_size);
+//   // std::memcpy(push_constants_data_, data, total_size);
 
-  push_constants_size_ = size;
-  push_constants_data_type_memory_size_ = type_memory_size;
-}
+//   // push_constants_size_ = size;
+//   // push_constants_data_type_memory_size_ = type_memory_size;
+//   throw std::runtime_error("Not implemented");
+// }
 
 void Algorithm::create_pipeline() {
   // Push constant Range (1.5/3)
   const auto push_constant_range = VkPushConstantRange{
       .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
       .offset = 0,
-      .size = push_constants_data_type_memory_size_ * push_constants_size_,
+      // .size = push_constants_data_type_memory_size_ * push_constants_size_,
+      .size = heterogeneous_push_constants_size_,
   };
 
   // Pipeline layout (2/3)
@@ -209,18 +236,32 @@ void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
                           nullptr);
 }
 
+// // this method send the push constants to the shader
+// void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
+//   spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
+//                 push_constants_size_ *
+//                 push_constants_data_type_memory_size_);
+
+//   vkCmdPushConstants(
+//       cmd_buf,
+//       pipeline_layout_,
+//       VK_SHADER_STAGE_COMPUTE_BIT,
+//       0,
+//       push_constants_size_ * push_constants_data_type_memory_size_,
+//       push_constants_data_);
+// }
+
 // this method send the push constants to the shader
 void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
   spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
-                push_constants_size_ * push_constants_data_type_memory_size_);
+                heterogeneous_push_constants_size_);
 
-  vkCmdPushConstants(
-      cmd_buf,
-      pipeline_layout_,
-      VK_SHADER_STAGE_COMPUTE_BIT,
-      0,
-      push_constants_size_ * push_constants_data_type_memory_size_,
-      push_constants_data_);
+  vkCmdPushConstants(cmd_buf,
+                     pipeline_layout_,
+                     VK_SHADER_STAGE_COMPUTE_BIT,
+                     0,
+                     heterogeneous_push_constants_size_,
+                     heterogeneous_push_constants_data_);
 }
 
 // this method dispatch the kernel with the number of blocks based on the input

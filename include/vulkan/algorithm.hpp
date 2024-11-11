@@ -11,12 +11,12 @@ class Algorithm : public VulkanResource<VkShaderModule> {
  public:
   Algorithm() = delete;
 
-  template <typename T>
   explicit Algorithm(std::shared_ptr<VkDevice> device_ptr,
                      std::string_view spirv_filename,
                      const std::vector<std::shared_ptr<Buffer>> &buffers,
                      uint32_t threads_per_block,
-                     const std::vector<T> &push_constants = {})
+                     const std::byte *push_constants_data,
+                     const uint32_t push_constants_size)
       : VulkanResource<VkShaderModule>(std::move(device_ptr)),
         spirv_filename_(spirv_filename),
         usm_buffers_(buffers),
@@ -26,9 +26,7 @@ class Algorithm : public VulkanResource<VkShaderModule> {
         spirv_filename_,
         buffers.size());
 
-    if (!push_constants.empty()) {
-      set_push_constants(push_constants);
-    }
+    set_push_constants(push_constants_data, push_constants_size);
 
     create_shader_module();
     create_parameters();
@@ -41,17 +39,6 @@ class Algorithm : public VulkanResource<VkShaderModule> {
   void destroy() override;
 
  public:
-  template <typename T>
-  void set_push_constants(const std::vector<T> &push_constants) {
-    const uint32_t memory_size = sizeof(decltype(push_constants.back()));
-    const uint32_t size = push_constants.size();
-    this->set_push_constants(push_constants.data(), size, memory_size);
-  }
-
-  void set_push_constants(const void *data,
-                          uint32_t size,
-                          uint32_t type_memory_size);
-
   // this method send the pipeline and descriptor set to the shader (basically
   // send the data in buffer to shader)
   void record_bind_core(VkCommandBuffer cmd_buf) const;
@@ -68,6 +55,8 @@ class Algorithm : public VulkanResource<VkShaderModule> {
                                    uint32_t n_blocks) const;
 
  private:
+  void set_push_constants(const std::byte *push_constants_data,
+                          const uint32_t push_constants_size);
   // L1
   void create_shader_module();
 
@@ -98,10 +87,14 @@ class Algorithm : public VulkanResource<VkShaderModule> {
 
   std::vector<std::shared_ptr<Buffer>> usm_buffers_;
 
-  // Currently this assume the push constant is homogeneous type
-  void *push_constants_data_ = nullptr;
-  uint32_t push_constants_data_type_memory_size_ = 0;
-  uint32_t push_constants_size_ = 0;
+  // // Currently this assume the push constant is homogeneous type
+  // void *push_constants_data_ = nullptr;
+  // uint32_t push_constants_data_type_memory_size_ = 0;
+  // uint32_t push_constants_size_ = 0;
+
+  // this hetero genous push constants
+  std::byte *heterogeneous_push_constants_data_ = nullptr;
+  uint32_t heterogeneous_push_constants_size_ = 0;
 
   /**
    * @brief In CUDA terms, this is the number threads per block. It is used to

@@ -23,18 +23,37 @@ class Engine final : public BaseEngine {
     return buf;
   }
 
-  template <typename T>
+  // template <typename T>
+  // [[nodiscard]] auto algorithm(
+  //     const std::string &spirv_filename,
+  //     const std::vector<std::shared_ptr<Buffer>> &buffers,
+  //     uint32_t threads_per_block,
+  //     const std::vector<T> &push_constants = {})
+  //     -> std::shared_ptr<Algorithm> {
+  //   auto algo = std::make_shared<Algorithm>(this->get_device_ptr(),
+  //                                           spirv_filename,
+  //                                           buffers,
+  //                                           threads_per_block,
+  //                                           push_constants);
+
+  //   if (manage_resources_) {
+  //     algorithms_.push_back(algo);
+  //   }
+  //   return algo;
+  // }
+
   [[nodiscard]] auto algorithm(
       const std::string &spirv_filename,
       const std::vector<std::shared_ptr<Buffer>> &buffers,
       uint32_t threads_per_block,
-      const std::vector<T> &push_constants = {})
-      -> std::shared_ptr<Algorithm> {
+      const std::byte *push_constants_data,
+      const uint32_t push_constants_size) -> std::shared_ptr<Algorithm> {
     auto algo = std::make_shared<Algorithm>(this->get_device_ptr(),
                                             spirv_filename,
                                             buffers,
                                             threads_per_block,
-                                            push_constants);
+                                            push_constants_data,
+                                            push_constants_size);
 
     if (manage_resources_) {
       algorithms_.push_back(algo);
