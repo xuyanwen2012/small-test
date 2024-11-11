@@ -53,13 +53,8 @@ int main(int argc, char** argv) {
     auto buf = engine.buffer(n * sizeof(glm::vec4));
     buf->zeros();
 
-    auto debug_buf = engine.buffer(10 * sizeof(int));
-    debug_buf->zeros();
-
-    std::vector<int> push_constants = {n, min_val, range, seed};
-
     auto algo = engine.algorithm<int>(
-        "init.spv", {buf, debug_buf}, 512, push_constants);
+        "init.spv", {buf}, 512, {n, min_val, range, seed});
 
     auto seq = engine.sequence();
 
@@ -72,12 +67,6 @@ int main(int argc, char** argv) {
     auto span = buf->span<glm::vec4>();
     for (auto i = 0; i < n; ++i) {
       spdlog::info("{}: {}", i, span[i]);
-    }
-
-    // print debug buffer
-    auto debug_span = debug_buf->span<int>();
-    for (auto i = 0; i < 10; ++i) {
-      spdlog::info("{}: {}", i, debug_span[i]);
     }
   }
 
