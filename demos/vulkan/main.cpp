@@ -20,10 +20,12 @@ int main(int argc, char** argv) {
 
   Engine engine;
 
-  constexpr auto n = 1024;
-  constexpr auto min_val = 0;
-  constexpr auto range = 1024;
-  constexpr auto seed = 114514;
+  constexpr int n = 50000;
+  constexpr int min_val = 0;
+  constexpr int range = 1;
+  constexpr int seed = 114514;
+
+  constexpr int num_blocks = 1;
 
   // (1) init kernel
   {
@@ -41,8 +43,8 @@ int main(int argc, char** argv) {
 
     auto buf = engine.buffer(n * sizeof(glm::vec4));
 
-    auto algo =
-        engine.algorithm("init.spv", {buf}, 512, {n, min_val, range, seed});
+    auto algo = engine.algorithm(
+        "init.spv", {buf}, num_blocks, {n, min_val, range, seed});
 
     auto seq = engine.sequence();
     seq->simple_record_commands(algo.get(), n);
