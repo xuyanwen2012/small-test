@@ -9,14 +9,6 @@ target("test-glm")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
 
-target("test-vulkan")
-    set_kind("binary")
-    add_includedirs("$(projectdir)/include")
-    add_files("foundations/test-vulkan.cpp")
-    add_packages("gtest", "vulkan-headers", "volk")
-    if is_plat("android") then on_run(run_on_android) end
-target_end()
-
 -- if not is_plat("android") then
 -- target("test-cuda")
 --     set_kind("binary")
@@ -42,5 +34,25 @@ target("test-thread-pinning")
     set_kind("binary")
     add_files("thread_pinning.cpp")
     add_packages("gtest")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()
+
+-- ---------------------------------------------------------------------
+-- Vulkan
+-- ---------------------------------------------------------------------
+
+target("test-vulkan")
+    set_kind("binary")
+    add_includedirs("$(projectdir)/include")
+    add_files("foundations/test-vulkan.cpp")
+    add_packages("gtest", "volk")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()
+
+target("test-vma")
+    set_kind("binary")
+    add_includedirs("$(projectdir)/include")
+    add_files("foundations/test-vma.cpp")
+    add_packages("gtest", "volk", "vulkan-memory-allocator")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
