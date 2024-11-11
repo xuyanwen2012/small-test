@@ -1,6 +1,9 @@
 #include <spdlog/spdlog.h>
 
+#include <memory>
+
 #include "algorithm.hpp"
+#include "buffer.hpp"
 #include "engine.hpp"
 #include "sequence.hpp"
 
@@ -22,25 +25,21 @@ int main() {
 
     constexpr auto threads_per_block = 32;
 
-    Algorithm algo(engine.get_device(),
-                   "test.spv",
-                   {buf, buf2, buf3},
-                   threads_per_block,
-                   {n});
+    auto algo =
+        engine.algorithm("test.spv", {buf, buf2, buf3}, threads_per_block, {n});
 
-    Sequence seq(engine.get_device(),
-                 engine.get_queue(),
-                 engine.get_compute_queue_index());
+    auto seq = engine.sequence();
 
-    seq.simple_record_commands(algo, n);
-    seq.launch_kernel_async();
+    seq->simple_record_commands(algo.get(), n);
+    seq->launch_kernel_async();
 
-    seq.sync();
+    // do other tasks on the CPU while the GPU is processing
 
-    // print the result
-    int* data = buf3->map<int>();
-    for (auto i = 0; i < 128; i++) {
-      spdlog::info("data[{}] = {}", i, data[i]);
+    seq->sync();
+
+    // print the first 128 results
+    for (auto i : buf3->span<int>().subspan(0, 128)) {
+      spdlog::info("{}", i);
     }
   }
 
