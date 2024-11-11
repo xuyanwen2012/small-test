@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     std::ranges::fill(buf2->span<int>(), 2);
     std::ranges::fill(buf3->span<int>(), 0);
 
-    constexpr auto threads_per_block = 32;
+    constexpr auto threads_per_block = 64;
 
     auto algo =
         engine.algorithm("test.spv", {buf, buf2, buf3}, threads_per_block, {n});
