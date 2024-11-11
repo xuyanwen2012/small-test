@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "glm_helper.hpp"
+#include "shared/morton_func.h"
 #include "third-party/CLI11.hpp"
 #include "vulkan/engine.hpp"
 
@@ -85,6 +86,58 @@ void test_morton_kernel(Engine& engine, int num_blocks) {
   }
 }
 
+// struct Pipe {
+//   // ------------------------
+//   // Essential Data (CPU/GPU shared)
+//   // ------------------------
+
+//   // mutable
+//   int n_unique = UNINITIALIZED;
+
+//   glm::vec4* u_points;
+//   morton_t* u_morton;
+//   morton_t* u_morton_alt;  // also used as the unique morton
+//   // RadixTree brt;
+//   int* u_edge_counts;
+//   int* u_edge_offsets;
+//   // Octree oct;
+
+//   // read-only
+//   int n_points;
+//   float min_coord;
+//   float range;
+//   int seed;
+// };
+
+struct Pipe {
+  // ------------------------
+  // Essential Data (CPU/GPU shared)
+  // ------------------------
+
+  // mutable
+  int n_unique = UNINITIALIZED;
+
+  // glm::vec4* u_points;
+  // morton_t* u_morton;
+  // morton_t* u_morton_alt;  // also used as the unique morton
+  // // RadixTree brt;
+  // int* u_edge_counts;
+  // int* u_edge_offsets;
+  // // Octree oct;
+
+  // Buffer<glm::vec4> u_points;
+  // Buffer<morton_t> u_morton;
+  // Buffer<morton_t> u_morton_alt;  // also used as the unique morton
+  // Buffer<int> u_edge_counts;
+  // Buffer<int> u_edge_offsets;
+
+  // read-only
+  int n_points;
+  float min_coord;
+  float range;
+  int seed;
+};
+
 int main(int argc, char** argv) {
   CLI::App app{"VMA Debug"};
 
@@ -114,8 +167,43 @@ int main(int argc, char** argv) {
   spdlog::info("seed: {}", seed);
   spdlog::info("num_blocks: {}", num_blocks);
 
-  test_init_kernel(engine, num_blocks);
-  test_morton_kernel(engine, num_blocks);
+  // test_init_kernel(engine, num_blocks);
+  // test_morton_kernel(engine, num_blocks);
+
+  {
+    auto init_data = engine.buffer(n * sizeof(glm::vec4));
+    init_data->zeros();
+
+    auto algo = engine.algorithm<int>(
+        "init.spv", {init_data}, 512, {n, min_val, range, seed});
+
+    auto seq = engine.sequence();
+    seq->record_commands_with_blocks(algo.get(), num_blocks);
+    seq->launch_kernel_async();
+    seq->sync();
+
+    // print 10 results
+    auto init_span = init_data->span<glm::vec4>();
+    for (auto i = 0; i < 10; ++i) {
+      spdlog::info("{}: {}", i, init_span[i]);
+    }
+
+    auto morton_buf = engine.buffer(n * sizeof(uint32_t));
+    morton_buf->zeros();
+
+    auto morton_algo = engine.algorithm<float>(
+        "morton.spv", {init_data, morton_buf}, 768, {n, min_val, range});
+
+    seq->record_commands_with_blocks(morton_algo.get(), num_blocks);
+    seq->launch_kernel_async();
+    seq->sync();
+
+    // print 10 results
+    auto morton_span = morton_buf->span<uint32_t>();
+    for (auto i = 0; i < 10; ++i) {
+      spdlog::info("Morton code {}: {}", i, morton_span[i]);
+    }
+  }
 
   spdlog::info("Done!");
   return EXIT_SUCCESS;
