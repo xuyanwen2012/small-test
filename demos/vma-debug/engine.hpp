@@ -15,7 +15,7 @@ class Engine final : public BaseEngine {
   ~Engine();
 
   [[nodiscard]] auto buffer(VkDeviceSize size) -> std::shared_ptr<Buffer> {
-    auto buf = std::make_shared<Buffer>(this->get_device(), size);
+    auto buf = std::make_shared<Buffer>(this->get_device_ptr(), size);
 
     if (manage_resources_) {
       buffers_.push_back(buf);
@@ -29,7 +29,7 @@ class Engine final : public BaseEngine {
       uint32_t threads_per_block,
       const std::vector<float> &push_constants = {})
       -> std::shared_ptr<Algorithm> {
-    auto algo = std::make_shared<Algorithm>(this->get_device(),
+    auto algo = std::make_shared<Algorithm>(this->get_device_ptr(),
                                             spirv_filename,
                                             buffers,
                                             threads_per_block,
@@ -42,8 +42,9 @@ class Engine final : public BaseEngine {
   }
 
   [[nodiscard]] auto sequence() -> std::shared_ptr<Sequence> {
-    auto seq = std::make_shared<Sequence>(
-        this->get_device(), this->get_queue(), this->get_compute_queue_index());
+    auto seq = std::make_shared<Sequence>(this->get_device_ptr(),
+                                          this->get_queue(),
+                                          this->get_compute_queue_index());
 
     if (manage_resources_) {
       sequences_.push_back(seq);

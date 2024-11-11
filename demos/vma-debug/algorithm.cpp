@@ -6,12 +6,12 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 void Algorithm::destroy() {
-  vkDestroyShaderModule(device_, shader_module_, nullptr);
-  vkDestroyPipeline(device_, pipeline_, nullptr);
-  vkDestroyPipelineCache(device_, pipeline_cache_, nullptr);
-  vkDestroyPipelineLayout(device_, pipeline_layout_, nullptr);
-  vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
-  vkDestroyDescriptorPool(device_, descriptor_pool_, nullptr);
+  vkDestroyShaderModule(*device_ptr_, handle_, nullptr);
+  vkDestroyPipeline(*device_ptr_, pipeline_, nullptr);
+  vkDestroyPipelineCache(*device_ptr_, pipeline_cache_, nullptr);
+  vkDestroyPipelineLayout(*device_ptr_, pipeline_layout_, nullptr);
+  vkDestroyDescriptorSetLayout(*device_ptr_, descriptor_set_layout_, nullptr);
+  vkDestroyDescriptorPool(*device_ptr_, descriptor_pool_, nullptr);
   free(push_constants_data_);
 }
 
@@ -30,10 +30,14 @@ void Algorithm::create_descriptor_pool() {
       .pPoolSizes = pool_sizes.data(),
   };
 
-  if (vkCreateDescriptorPool(device_, &pool_info, nullptr, &descriptor_pool_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Failed to create descriptor pool");
-  }
+  // if (vkCreateDescriptorPool(device_, &pool_info, nullptr, &descriptor_pool_)
+  // !=
+  //     VK_SUCCESS) {
+  //   throw std::runtime_error("Failed to create descriptor pool");
+  // }
+
+  check_vk_result(vkCreateDescriptorPool(
+      *device_ptr_, &pool_info, nullptr, &descriptor_pool_));
 }
 
 void Algorithm::create_descriptor_set_layout() {
@@ -57,11 +61,8 @@ void Algorithm::create_descriptor_set_layout() {
       .pBindings = bindings.data(),
   };
 
-  if (vkCreateDescriptorSetLayout(
-          device_, &layout_create_info, nullptr, &descriptor_set_layout_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Failed to create descriptor set layout");
-  }
+  check_vk_result(vkCreateDescriptorSetLayout(
+      *device_ptr_, &layout_create_info, nullptr, &descriptor_set_layout_));
 }
 
 void Algorithm::allocate_descriptor_sets() {
@@ -72,10 +73,8 @@ void Algorithm::allocate_descriptor_sets() {
       .pSetLayouts = &descriptor_set_layout_,
   };
 
-  if (vkAllocateDescriptorSets(device_, &set_allocate_info, &descriptor_set_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Failed to allocate descriptor set");
-  }
+  check_vk_result(vkAllocateDescriptorSets(
+      *device_ptr_, &set_allocate_info, &descriptor_set_));
 }
 
 void Algorithm::update_descriptor_sets() {
@@ -97,7 +96,7 @@ void Algorithm::update_descriptor_sets() {
   }
 
   vkUpdateDescriptorSets(
-      device_,
+      *device_ptr_,
       static_cast<uint32_t>(compute_write_descriptor_sets.size()),
       compute_write_descriptor_sets.data(),
       0,
@@ -197,22 +196,16 @@ void Algorithm::create_pipeline() {
       .pPushConstantRanges = &push_constant_range,
   };
 
-  if (vkCreatePipelineLayout(
-          device_, &layout_create_info, nullptr, &pipeline_layout_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Failed to create pipeline layout");
-  }
+  check_vk_result(vkCreatePipelineLayout(
+      *device_ptr_, &layout_create_info, nullptr, &pipeline_layout_));
 
   // Pipeline cache (2.5/3)
   constexpr auto pipeline_cache_info = VkPipelineCacheCreateInfo{
       .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
   };
 
-  if (vkCreatePipelineCache(
-          device_, &pipeline_cache_info, nullptr, &pipeline_cache_) !=
-      VK_SUCCESS) {
-    throw std::runtime_error("Failed to create pipeline cache");
-  }
+  check_vk_result(vkCreatePipelineCache(
+      *device_ptr_, &pipeline_cache_info, nullptr, &pipeline_cache_));
 
   // Specialization info (2.75/3) telling the shader the workgroup size
 
@@ -224,7 +217,7 @@ void Algorithm::create_pipeline() {
   VkPipelineShaderStageCreateInfo shader_stage_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
       .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-      .module = shader_module_,
+      .module = this->get_handle(),
       .pName = p_name,
   };
 
@@ -236,7 +229,7 @@ void Algorithm::create_pipeline() {
   };
 
   spdlog::debug("Creating compute pipeline with:");
-  spdlog::debug("  Shader module handle: {}", (void *)shader_module_);
+  spdlog::debug("  Shader module handle: {}", (void *)this->get_handle());
   spdlog::debug("  Pipeline layout handle: {}", (void *)pipeline_layout_);
   spdlog::debug("  Entry point name: {}", p_name);
 
@@ -247,8 +240,12 @@ void Algorithm::create_pipeline() {
   //   throw std::runtime_error("Failed to create compute pipeline");
   // }
 
-  check_vk_result(vkCreateComputePipelines(
-      device_, pipeline_cache_, 1, &pipeline_create_info, nullptr, &pipeline_));
+  check_vk_result(vkCreateComputePipelines(*device_ptr_,
+                                           pipeline_cache_,
+                                           1,
+                                           &pipeline_create_info,
+                                           nullptr,
+                                           &pipeline_));
 
   spdlog::debug("Pipeline created successfully");
 }
@@ -277,8 +274,8 @@ void Algorithm::create_shader_module() {
       .pCode = reinterpret_cast<const uint32_t *>(spirv_binary.data()),
   };
 
-  check_vk_result(
-      vkCreateShaderModule(device_, &create_info, nullptr, &shader_module_));
+  check_vk_result(vkCreateShaderModule(
+      *device_ptr_, &create_info, nullptr, &this->get_handle()));
 
   spdlog::debug("Shader module created successfully");
 }

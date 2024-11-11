@@ -2,13 +2,14 @@
 
 #include "algorithm.hpp"
 #include "base_engine.hpp"
+#include "vulkan_resource.hpp"
 
-class Sequence {
+class Sequence : public VulkanResource<VkCommandBuffer> {
  public:
-  explicit Sequence(VkDevice device,
+  explicit Sequence(std::shared_ptr<VkDevice> device_ptr,
                     VkQueue queue,
                     uint32_t compute_queue_index)
-      : device_(device),
+      : VulkanResource<VkCommandBuffer>(std::move(device_ptr)),
         queue_(queue),
         compute_queue_index_(compute_queue_index) {
     create_sync_objects();
@@ -16,13 +17,16 @@ class Sequence {
     create_command_buffer();
   }
 
-  ~Sequence() { destroy(); }
-  void destroy();
+  ~Sequence() override { destroy(); }
+
+ protected:
+  void destroy() override;
 
   // ---------------------------------------------------------------------------
   //             Operations you can do w/ the command buffer
   // ---------------------------------------------------------------------------
 
+ public:
   void cmd_begin() const;
   void cmd_end() const;
 
@@ -35,9 +39,9 @@ class Sequence {
    */
   void simple_record_commands(const Algorithm *algo, const uint32_t n) const {
     cmd_begin();
-    algo->record_bind_core(command_buffer_);
-    algo->record_bind_push(command_buffer_);
-    algo->record_dispatch_tmp(command_buffer_, n);
+    algo->record_bind_core(this->get_handle());
+    algo->record_bind_push(this->get_handle());
+    algo->record_dispatch_tmp(this->get_handle(), n);
     cmd_end();
   }
 
@@ -60,12 +64,14 @@ class Sequence {
   void create_command_buffer();
 
   // ref
-  VkDevice device_ = VK_NULL_HANDLE;
+  // VkDevice device_ = VK_NULL_HANDLE;
+
   VkQueue queue_ = VK_NULL_HANDLE;
+
   uint32_t compute_queue_index_ = 0;
 
   // owned
-  VkCommandBuffer command_buffer_ = VK_NULL_HANDLE;
+  // VkCommandBuffer command_buffer_ = VK_NULL_HANDLE; // the handle
   VkCommandPool command_pool_ = VK_NULL_HANDLE;
   VkFence fence_ = VK_NULL_HANDLE;
 };

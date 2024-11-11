@@ -1,16 +1,15 @@
 #pragma once
 
-// #include <cstddef>
-
 #include <span>
 
 #include "base_engine.hpp"
 #include "vk_mem_alloc.h"
+#include "vulkan_resource.hpp"
 
-class Buffer {
+class Buffer : public VulkanResource<VkBuffer> {
  public:
   Buffer() = delete;
-  explicit Buffer(VkDevice device,
+  explicit Buffer(std::shared_ptr<VkDevice> device_ptr,
                   VkDeviceSize size,
                   VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                   VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO,
@@ -18,10 +17,12 @@ class Buffer {
                       VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT |
                       VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
-  ~Buffer();
+  ~Buffer() override { destroy(); }
 
-  void destroy();
+ protected:
+  void destroy() override;
 
+ public:
   // ---------------------------------------------------------------------------
   //      The following functions provides infos for the descriptor set
   // ---------------------------------------------------------------------------
@@ -39,9 +40,8 @@ class Buffer {
   }
 
  private:
-  VkDevice device_ = VK_NULL_HANDLE;
-
-  VkBuffer buffer_ = VK_NULL_HANDLE;
+  // VkDevice device_ = VK_NULL_HANDLE;
+  // VkBuffer buffer_ = VK_NULL_HANDLE;
 
   // Vulkan Memory Allocator components
   VmaAllocation allocation_ = VK_NULL_HANDLE;

@@ -2,14 +2,17 @@
 
 #include <spdlog/spdlog.h>
 
+#include "vk_helper.hpp"
+#include "vk_mem_alloc.h"
+
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
-Buffer::Buffer(VkDevice device,
+Buffer::Buffer(std::shared_ptr<VkDevice> device_ptr,
                const VkDeviceSize size,
                const VkBufferUsageFlags usage,
                const VmaMemoryUsage memory_usage,
                const VmaAllocationCreateFlags flags)
-    : device_(device),
+    : VulkanResource(std::move(device_ptr)),
       size_(size),
       persistent_{(flags & VMA_ALLOCATION_CREATE_MAPPED_BIT) != 0} {
   spdlog::debug("Buffer::Buffer");
@@ -27,15 +30,22 @@ Buffer::Buffer(VkDevice device,
 
   VmaAllocationInfo allocation_info{};
 
-  if (const auto result = vmaCreateBuffer(BaseEngine::get_allocator(),
-                                          &buffer_create_info,
-                                          &memory_info,
-                                          &buffer_,
-                                          &allocation_,
-                                          &allocation_info);
-      result != VK_SUCCESS) {
-    throw std::runtime_error("Cannot create HPPBuffer");
-  }
+  // if (const auto result = vmaCreateBuffer(BaseEngine::get_allocator(),
+  //                                         &buffer_create_info,
+  //                                         &memory_info,
+  //                                         &this->handle_,
+  //                                         &allocation_,
+  //                                         &allocation_info);
+  //     result != VK_SUCCESS) {
+  //   throw std::runtime_error("Cannot create Buffer");
+  // }
+
+  check_vk_result(vmaCreateBuffer(BaseEngine::get_allocator(),
+                                  &buffer_create_info,
+                                  &memory_info,
+                                  &this->handle_,
+                                  &allocation_,
+                                  &allocation_info));
 
   // log the allocation info
   spdlog::debug("\tsize: {}", allocation_info.size);
@@ -53,19 +63,14 @@ Buffer::Buffer(VkDevice device,
   // spdlog::debug("mapped_data_[0]: {}", static_cast<int>(mapped_data_[0]));
 }
 
-Buffer::~Buffer() {
-  spdlog::debug("Buffer::~Buffer");
-  destroy();
-}
-
 void Buffer::destroy() {
-  vmaDestroyBuffer(BaseEngine::get_allocator(), buffer_, allocation_);
+  vmaDestroyBuffer(BaseEngine::get_allocator(), this->handle_, allocation_);
 }
 
 VkDescriptorBufferInfo Buffer::construct_descriptor_buffer_info() const {
   return VkDescriptorBufferInfo{
-      .buffer = buffer_,
+      .buffer = this->handle_,
       .offset = 0,
-      .range = size_,
+      .range = this->size_,
   };
 }

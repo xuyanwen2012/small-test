@@ -3,8 +3,9 @@
 #define VK_NO_PROTOTYPES
 #include <volk.h>
 
-#include "vk_mem_alloc.h"
+#include <memory>
 
+#include "vk_mem_alloc.h"
 // -----------------------------------------------------------------------------
 // BaseEngine.hpp
 // -----------------------------------------------------------------------------
@@ -18,6 +19,10 @@ class BaseEngine {
   ~BaseEngine() { destroy(); }
 
   void destroy();
+
+  [[nodiscard]] std::shared_ptr<VkDevice> get_device_ptr() {
+    return std::make_shared<VkDevice>(device_);
+  }
 
   // getters
   [[nodiscard]] VkDevice get_device() const { return device_; }

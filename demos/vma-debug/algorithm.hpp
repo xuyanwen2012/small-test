@@ -7,17 +7,17 @@
 
 #include "buffer.hpp"
 
-class Algorithm {
+class Algorithm : public VulkanResource<VkShaderModule> {
  public:
   Algorithm() = delete;
 
-  explicit Algorithm(VkDevice device,
+  explicit Algorithm(std::shared_ptr<VkDevice> device_ptr,
                      std::string_view spirv_filename,
                      const std::vector<std::shared_ptr<Buffer>> &buffers,
                      uint32_t threads_per_block,
                      const std::vector<float> &push_constants = {})
-      : spirv_filename_(spirv_filename),
-        device_(device),
+      : VulkanResource<VkShaderModule>(std::move(device_ptr)),
+        spirv_filename_(spirv_filename),
         usm_buffers_(buffers),
         threads_per_block_(threads_per_block) {
     spdlog::info(
@@ -34,13 +34,15 @@ class Algorithm {
     create_pipeline();
   }
 
-  ~Algorithm() {
+  ~Algorithm() override {
     spdlog::info("Algorithm::~Algorithm()");
     destroy();
   }
 
-  void destroy();
+ protected:
+  void destroy() override;
 
+ public:
   template <typename T>
   void set_push_constants(const std::vector<T> &push_constants) {
     const uint32_t memory_size = sizeof(decltype(push_constants.back()));
@@ -82,10 +84,10 @@ class Algorithm {
 
   std::string spirv_filename_;
 
-  VkDevice device_ = VK_NULL_HANDLE;
+  // VkDevice device_ = VK_NULL_HANDLE;
 
   // Vulkan components
-  VkShaderModule shader_module_ = VK_NULL_HANDLE;
+  // VkShaderModule shader_module_ = VK_NULL_HANDLE;
   VkPipeline pipeline_ = VK_NULL_HANDLE;
   VkPipelineCache pipeline_cache_ = VK_NULL_HANDLE;
   VkPipelineLayout pipeline_layout_ = VK_NULL_HANDLE;
