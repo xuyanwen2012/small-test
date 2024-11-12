@@ -188,7 +188,7 @@ void main() {
     k_MakeOctNodes(i);
   }
 
-  for (uint i = idx; i < n_brt_nodes; i += stride) {
-    k_LinkLeafNodes(int(i));
-  }
+  // for (uint i = idx; i < n_brt_nodes; i += stride) {
+  //   k_LinkLeafNodes(int(i));
+  // }
 }
