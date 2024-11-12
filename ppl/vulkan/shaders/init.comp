@@ -38,40 +38,38 @@ layout(push_constant) uniform PushConstants {
   float min_coord;
   float range;
   int seed;
-}
-push_constant;
+};
 
 layout(local_size_x = 512) in;
 
-float uint_to_float(uint x) { return float(x) / float(0xffffffffU); }
+float uint_to_float(const uint x) { return float(x) / float(0xffffffffU); }
 
-float uint_to_float_scaled(uint x, float min_val, float range) {
+float uint_to_float_scaled(const uint x,
+                           const float min_val,
+                           const float range) {
   return min_val + uint_to_float(x) * range;
 }
 
 void Init() {
-  uint idx = gl_LocalInvocationID.x + gl_WorkGroupSize.x * gl_WorkGroupID.x;
-  uint stride = gl_WorkGroupSize.x * gl_NumWorkGroups.x;
+  const uint idx =
+      gl_LocalInvocationID.x + gl_WorkGroupSize.x * gl_WorkGroupID.x;
+  const uint stride = gl_WorkGroupSize.x * gl_NumWorkGroups.x;
 
-  uint z1 = idx ^ (push_constant.seed * 1234567U);
-  uint z2 = idx ^ (push_constant.seed * 7654321U);
-  uint z3 = idx ^ (push_constant.seed * 2345678U);
-  uint z4 = idx ^ (push_constant.seed * 8765432U);
+  uint z1 = idx ^ (seed * 1234567U);
+  uint z2 = idx ^ (seed * 7654321U);
+  uint z3 = idx ^ (seed * 2345678U);
+  uint z4 = idx ^ (seed * 8765432U);
 
-  for (uint i = idx; i < push_constant.size; i += stride) {
+  for (uint i = idx; i < size; i += stride) {
     z1 = TAUS_STEP_1;
     z2 = TAUS_STEP_2;
     z3 = TAUS_STEP_3;
     z4 = LCG_STEP;
-    random_buffer[i] =
-        vec4(uint_to_float_scaled(
-                 z1 ^ z2, push_constant.min_coord, push_constant.range),
-             uint_to_float_scaled(
-                 z2 ^ z3, push_constant.min_coord, push_constant.range),
-             uint_to_float_scaled(
-                 z3 ^ z4, push_constant.min_coord, push_constant.range),
-             uint_to_float_scaled(
-                 z1 ^ z4, push_constant.min_coord, push_constant.range));
+
+    random_buffer[i] = vec4(uint_to_float_scaled(z1 ^ z2, min_coord, range),
+                            uint_to_float_scaled(z2 ^ z3, min_coord, range),
+                            uint_to_float_scaled(z3 ^ z4, min_coord, range),
+                            uint_to_float_scaled(z1 ^ z4, min_coord, range));
   }
 }
 
