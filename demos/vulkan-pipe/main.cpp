@@ -158,8 +158,8 @@ struct Pipe {
 
   void build_radix_tree() {
     struct {
-      int n_unique;
-    } build_radix_tree_push_constants = {n_unique};
+      int n_brt_nodes;
+    } build_radix_tree_push_constants = {n_unique - 1};
 
     auto algo = engine.algorithm(
         "build_radix_tree.spv",
@@ -176,6 +176,29 @@ struct Pipe {
     seq->record_commands_with_blocks(algo.get(), num_blocks);
     seq->launch_kernel_async();
     seq->sync();
+  }
+
+  void edge_counts() {
+    struct {
+      int n_brt_nodes;
+    } edge_counts_push_constants = {n_unique};
+
+    auto algo = engine.algorithm(
+        "edge_count.spv",
+        {brt->u_prefix_n, brt->u_parents, u_edge_counts},
+        512,
+        reinterpret_cast<const std::byte*>(&edge_counts_push_constants),
+        sizeof(edge_counts_push_constants));
+
+    seq->record_commands_with_blocks(algo.get(), num_blocks);
+    seq->launch_kernel_async();
+    seq->sync();
+  }
+
+  void edge_offsets() {
+    std::partial_sum(u_edge_counts->span<int>().begin(),
+                     u_edge_counts->span<int>().end(),
+                     u_edge_offsets->map<int>());
   }
 };
 
@@ -228,6 +251,17 @@ int main(int argc, char** argv) {
     spdlog::info("\thas_leaf_right: {}", has_leaf_right_span[i]);
     spdlog::info("\tleft_child: {}", left_child_span[i]);
     spdlog::info("\tparents: {}", parents_span[i]);
+  }
+
+  pipe.edge_counts();
+  pipe.edge_offsets();
+
+  // print the edge counts and offsets side by side
+  for (int i = 0; i < 10; ++i) {
+    spdlog::info("Edge {}: {} {}",
+                 i,
+                 pipe.u_edge_counts->span<int>()[i],
+                 pipe.u_edge_offsets->span<int>()[i]);
   }
 
   spdlog::info("Done!");
