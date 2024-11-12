@@ -43,7 +43,7 @@ add_requires("vulkan-memory-allocator")
 -- add_requires("vulkan-validationlayers")
 
 local ANDROID_CONFIG = {
-    ignored_devices = {"ZY22FLDDK7"},
+    ignored_devices = {"ZY22FLDDK7", "9b034f1b"},
     remote_base_path = "/data/local/tmp"  -- Base directory for all executables
 }
 
@@ -95,7 +95,9 @@ function run_on_android(target)
         }
 
         -- Copy shaders
+        
         local shader_dir = "./ppl/vulkan/shaders/compiled_shaders"
+        os.mkdir(shader_dir)
         for _, file in ipairs(os.files(shader_dir .. "/*.spv")) do
             table.insert(adb_commands, {"-s", device_id, "push", file, remote_path})
         end
