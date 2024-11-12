@@ -43,6 +43,44 @@ struct RadixTree {
   Engine& engine;
 };
 
+// int n_oct_nodes = UNINITIALIZED;
+
+// // // [Outputs]
+// // int (*u_children)[8];
+// // glm::vec4* u_corner;
+// // float* u_cell_size;
+// // int* u_child_node_mask;
+// // int* u_child_leaf_mask;
+// struct Octree {
+//   Octree() = delete;
+
+//   explicit Octree(Engine& engine, int n_octants) : engine(engine) {
+//     u_children = engine.buffer(n_octants * 8 * sizeof(int));
+//     u_corner = engine.buffer(n_octants * sizeof(glm::vec4));
+//     u_cell_size = engine.buffer(n_octants * sizeof(float));
+//     u_child_node_mask = engine.buffer(n_octants * sizeof(int));
+//     u_child_leaf_mask = engine.buffer(n_octants * sizeof(int));
+//   }
+
+//   int n_oct_nodes;
+
+//   std::shared_ptr<Buffer> u_children;
+//   std::shared_ptr<Buffer> u_corner;
+//   std::shared_ptr<Buffer> u_cell_size;
+//   std::shared_ptr<Buffer> u_child_node_mask;
+//   std::shared_ptr<Buffer> u_child_leaf_mask;
+
+//   Engine& engine;
+// };
+
+struct OctNode {
+  int children[8];
+  glm::vec4 corner;
+  float cell_size;
+  int child_node_mask;
+  int child_leaf_mask;
+};
+
 struct Pipe {
   Pipe() = delete;
 
@@ -64,6 +102,9 @@ struct Pipe {
     u_edge_counts = engine.buffer(n_points * sizeof(int));
     u_edge_offsets = engine.buffer(n_points * sizeof(int));
 
+    // todo: allocate oct nodes mutipliying by 0.6
+    u_oct_nodes = engine.buffer(n_points * sizeof(OctNode));
+
     seq = engine.sequence();
   }
 
@@ -78,6 +119,9 @@ struct Pipe {
 
   // RadixTree brt;
   std::unique_ptr<RadixTree> brt;
+  // std::unique_ptr<Octree> oct;
+
+  std::shared_ptr<Buffer> u_oct_nodes;
 
   // read-only
   const int n_points;
@@ -102,6 +146,14 @@ struct Pipe {
     brt = std::make_unique<RadixTree>(engine, n_unique - 1);
   }
 
+  // void allocate_oct() {
+  //   if (n_unique == UNINITIALIZED) {
+  //     throw std::runtime_error("n_unique is UNINITIALIZED");
+  //   }
+
+  //   oct = std::make_unique<Octree>(engine, n_unique * 0.6);
+  // }
+
   void init() {
     struct {
       int n;
@@ -113,7 +165,9 @@ struct Pipe {
 
     auto algo = engine.algorithm(
         "init.spv",
-        {u_points},
+        {
+            u_points,
+        },
         512,
         reinterpret_cast<const std::byte*>(&init_push_constants),
         sizeof(init_push_constants));
@@ -132,7 +186,10 @@ struct Pipe {
 
     auto algo = engine.algorithm(
         "morton.spv",
-        {u_points, u_morton},
+        {
+            u_points,
+            u_morton,
+        },
         512,
         reinterpret_cast<const std::byte*>(&compute_morton_push_constants),
         sizeof(compute_morton_push_constants));
@@ -163,12 +220,14 @@ struct Pipe {
 
     auto algo = engine.algorithm(
         "build_radix_tree.spv",
-        {u_morton_alt,
-         brt->u_prefix_n,
-         brt->u_has_leaf_left,
-         brt->u_has_leaf_right,
-         brt->u_left_child,
-         brt->u_parents},
+        {
+            u_morton_alt,
+            brt->u_prefix_n,
+            brt->u_has_leaf_left,
+            brt->u_has_leaf_right,
+            brt->u_left_child,
+            brt->u_parents,
+        },
         256,
         reinterpret_cast<const std::byte*>(&build_radix_tree_push_constants),
         sizeof(build_radix_tree_push_constants));
@@ -185,7 +244,11 @@ struct Pipe {
 
     auto algo = engine.algorithm(
         "edge_count.spv",
-        {brt->u_prefix_n, brt->u_parents, u_edge_counts},
+        {
+            brt->u_prefix_n,
+            brt->u_parents,
+            u_edge_counts,
+        },
         512,
         reinterpret_cast<const std::byte*>(&edge_counts_push_constants),
         sizeof(edge_counts_push_constants));
@@ -199,6 +262,46 @@ struct Pipe {
     std::partial_sum(u_edge_counts->span<int>().begin(),
                      u_edge_counts->span<int>().end(),
                      u_edge_offsets->map<int>());
+  }
+
+  // struct OctNode {
+  //   int children[8];
+  //   vec4 corner;
+  //   float cell_size;
+  //   int child_node_mask;
+  //   int child_leaf_mask;
+  // };
+  // layout(set = 0, binding = 0) buffer OctreeNodes { OctNode oct_nodes[]; };
+  // layout(set = 0, binding = 1) buffer NodeOffsets { uint node_offsets[]; };
+  // layout(set = 0, binding = 2) buffer RtNodeCounts { int rt_node_counts[]; };
+  // layout(set = 0, binding = 3) buffer Codes { uint codes[]; };
+  // layout(set = 0, binding = 4) buffer PrefixN { uint8_t rt_prefixN[]; };
+  // layout(set = 0, binding = 5) buffer Parents { int rt_parents[]; };
+  // layout(set = 0, binding = 6) buffer RtLeftChild { int rt_leftChild[]; };
+  // layout(set = 0, binding = 7) buffer RtHasLeafLeft { bool rt_hasLeafLeft[];
+  // }; layout(set = 0, binding = 8) buffer RtHasLeafRight { bool
+  // rt_hasLeafRight[]; }
+  void build_octree() {
+    struct {
+      int n_oct_nodes;
+    } build_octree_push_constants = {n_unique};
+
+    auto algo = engine.algorithm(
+        "octree.spv",
+        {
+            u_oct_nodes,
+            u_edge_offsets,
+            u_edge_counts,
+            u_morton_alt,
+            brt->u_prefix_n,
+            brt->u_parents,
+            brt->u_left_child,
+            brt->u_has_leaf_left,
+            brt->u_has_leaf_right,
+        },
+        512,
+        reinterpret_cast<const std::byte*>(&build_octree_push_constants),
+        sizeof(build_octree_push_constants));
   }
 };
 
@@ -262,6 +365,17 @@ int main(int argc, char** argv) {
                  i,
                  pipe.u_edge_counts->span<int>()[i],
                  pipe.u_edge_offsets->span<int>()[i]);
+  }
+
+  pipe.build_octree();
+
+  // print the octree first 10 nodes
+  auto oct_nodes_span = pipe.u_oct_nodes->span<OctNode>();
+  for (int i = 0; i < 10; ++i) {
+    spdlog::info("OctNode {}: {}", i, oct_nodes_span[i].corner);
+    spdlog::info("\tchildren[0]: {}", oct_nodes_span[i].children[0]);
+    spdlog::info("\tchild_node_mask: {}", oct_nodes_span[i].child_node_mask);
+    spdlog::info("\tchild_leaf_mask: {}", oct_nodes_span[i].child_leaf_mask);
   }
 
   spdlog::info("Done!");
