@@ -1,23 +1,15 @@
 #version 450
 
-// #extension GL_KHR_shader_subgroup_basic : enable
-// #extension GL_KHR_shader_subgroup_ballot : enable
-// #extension GL_KHR_shader_subgroup_arithmetic : enable
-// #extension GL_KHR_shader_subgroup_vote : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int8 : require
+// #extension GL_KHR_vulkan_glsl : require
 
 layout(push_constant) uniform N { int n; };
 
 layout(set = 0, binding = 0) buffer Codes { uint codes[]; };
-
 layout(set = 0, binding = 1) buffer PrefixN { uint8_t prefix_n[]; };
-
 layout(set = 0, binding = 2) buffer HasLeafLeft { bool has_leaf_left[]; };
-
 layout(set = 0, binding = 3) buffer HasLeafRight { bool has_leaf_right[]; };
-
 layout(set = 0, binding = 4) buffer LeftChild { int left_child[]; };
-
 layout(set = 0, binding = 5) buffer Parent { int parent[]; };
 
 layout(local_size_x = 256) in;
@@ -28,13 +20,7 @@ uint8_t delta_u32(const uint a, const uint b) {
   // uint bit1_mask = uint(1) << (4 * 8 - 1);
   uint val = a ^ b;
   int msb = findMSB(val);
-
   return uint8_t(31 - msb);
-
-  /*
-
-  return uint8_t(findMSB(a ^ b));
-  */
 }
 
 int log2_ceil_u32(const uint x) {

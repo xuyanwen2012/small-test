@@ -12,7 +12,8 @@ class Buffer : public VulkanResource<VkBuffer> {
   Buffer() = delete;
   explicit Buffer(std::shared_ptr<VkDevice> device_ptr,
                   VkDeviceSize size,
-                  VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                  VkBufferUsageFlags usage =
+                      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                   VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO,
                   VmaAllocationCreateFlags flags =
                       VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT |

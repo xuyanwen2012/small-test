@@ -30,16 +30,6 @@ Buffer::Buffer(std::shared_ptr<VkDevice> device_ptr,
 
   VmaAllocationInfo allocation_info{};
 
-  // if (const auto result = vmaCreateBuffer(BaseEngine::get_allocator(),
-  //                                         &buffer_create_info,
-  //                                         &memory_info,
-  //                                         &this->handle_,
-  //                                         &allocation_,
-  //                                         &allocation_info);
-  //     result != VK_SUCCESS) {
-  //   throw std::runtime_error("Cannot create Buffer");
-  // }
-
   check_vk_result(vmaCreateBuffer(BaseEngine::get_allocator(),
                                   &buffer_create_info,
                                   &memory_info,
@@ -55,12 +45,6 @@ Buffer::Buffer(std::shared_ptr<VkDevice> device_ptr,
 
   memory_ = static_cast<VkDeviceMemory>(allocation_info.deviceMemory);
   mapped_data_ = static_cast<std::byte *>(allocation_info.pMappedData);
-
-  // // write something to the mapped data
-  // std::memset(mapped_data_, 0x42, size);
-
-  // // read something from the mapped data
-  // spdlog::debug("mapped_data_[0]: {}", static_cast<int>(mapped_data_[0]));
 }
 
 void Buffer::destroy() {

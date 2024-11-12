@@ -1,5 +1,6 @@
 #include <spdlog/spdlog.h>
 
+#include <cstdint>
 #include <glm/glm.hpp>
 #include <memory>
 
@@ -238,7 +239,7 @@ int main(int argc, char** argv) {
 
     // layout(local_size_x = 256) in;
 
-    auto prefix_n_buf = engine.buffer(n_unique * sizeof(uint8_t));
+    auto prefix_n_buf = engine.buffer(n_unique * sizeof(uint32_t));
     prefix_n_buf->zeros();
 
     auto has_leaf_left_buf = engine.buffer(n_unique * sizeof(bool));
@@ -284,6 +285,41 @@ int main(int argc, char** argv) {
       spdlog::info("\tLeft child {}: {}", i, left_child_buf->span<int>()[i]);
       spdlog::info("\tParent {}: {}", i, parent_buf->span<int>()[i]);
     }
+
+    const auto n_brt_nodes = n_unique - 1;
+
+    // Step 6: edge counts
+    //     layout(set = 0, binding = 0) buffer PrefixN { uint8_t prefix_n[]; };
+    // layout(set = 0, binding = 1) buffer Parent { int parent[]; };
+    // layout(set = 0, binding = 2) buffer EdgeCount { int edge_count[]; };
+
+    // layout(push_constant) uniform Constant { int n_brt_nodes; };
+
+    // layout(local_size_x = 512) in;
+
+    // auto edge_count_buf = engine.buffer(n_brt_nodes * sizeof(int));
+    // edge_count_buf->zeros();
+
+    // struct {
+    //   int n_brt_nodes;
+    // } edge_count_push_constants = {static_cast<int>(n_brt_nodes)};
+
+    // auto edge_count_algo = engine.algorithm(
+    //     "edge_count.spv",
+    //     {prefix_n_buf, parent_buf, edge_count_buf},
+    //     512,
+    //     reinterpret_cast<const std::byte*>(&edge_count_push_constants),
+    //     sizeof(edge_count_push_constants));
+
+    // seq->record_commands_with_blocks(edge_count_algo.get(), num_blocks);
+    // seq->launch_kernel_async();
+    // seq->sync();
+
+    // // print 10 results
+    // auto edge_count_span = edge_count_buf->span<int>();
+    // for (auto i = 0; i < 10; ++i) {
+    //   spdlog::info("\tEdge count {}: {}", i, edge_count_span[i]);
+    // }
   }
 
   spdlog::info("Done!");

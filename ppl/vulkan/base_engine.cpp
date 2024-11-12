@@ -136,8 +136,19 @@ void BaseEngine::initialize_device() {
       .pQueuePriorities = &queue_priority,
   };
 
+  // need these features for 8-bit integer operations for some kernels (e.g.,
+  // radix tree)
+  constexpr VkPhysicalDeviceVulkan12Features vulkan12Features{
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+      .storageBuffer8BitAccess = VK_TRUE,
+      .shaderInt8 = VK_TRUE,
+      .bufferDeviceAddress = VK_TRUE,
+  };
+
+  // Modify the device creation info to include the features
   const VkDeviceCreateInfo device_create_info{
       .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+      .pNext = &vulkan12Features,
       .queueCreateInfoCount = 1,
       .pQueueCreateInfos = &queue_create_info,
   };
@@ -166,7 +177,8 @@ void BaseEngine::vma_initialization() {
       .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
   };
 
-  const VmaAllocatorCreateInfo vma_allocatorcreate_info{
+  const VmaAllocatorCreateInfo vma_allocator_create_info{
+      .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
       .physicalDevice = physical_device_,
       .device = device_,
       .pVulkanFunctions = &vulkan_functions,
@@ -174,7 +186,7 @@ void BaseEngine::vma_initialization() {
       .vulkanApiVersion = VK_API_VERSION_1_3,
   };
 
-  if (vmaCreateAllocator(&vma_allocatorcreate_info, &vma_allocator) !=
+  if (vmaCreateAllocator(&vma_allocator_create_info, &vma_allocator) !=
       VK_SUCCESS) {
     spdlog::error("Failed to create VMA allocator");
     return;

@@ -347,7 +347,7 @@ int main() {
     std::cout << "  │ Max Total Threads Per Work Group: " << std::setw(5)
               << deviceProperties.limits.maxComputeWorkGroupInvocations
               << "                │" << std::endl;
-    std::cout << "  └───────────────────────────────────────────────────┘"
+    std::cout << "  └────────────────────────────────���─────���────────────┘"
               << std::endl;
 
     // Memory and Storage Limits
@@ -419,24 +419,50 @@ int main() {
     std::cout << "  └───────────────────────────────────────────────────┘"
               << std::endl;
 
-    // Add CUDA terminology reference
-    std::cout << "\nCUDA Terminology Reference:" << std::endl;
+    // Test Vulkan 1.2 Features
+    std::cout << "\nVulkan 1.2 Features:" << std::endl;
     std::cout << "  ┌───────────────────────────────────────────────────┐"
               << std::endl;
-    std::cout << "  │ Work Group         ═ Thread Block                  │"
-              << std::endl;
-    std::cout << "  │ Work Group Size    ═ Threads per Block            │"
-              << std::endl;
-    std::cout << "  │ Work Group Count   ═ Grid Dimensions              │"
-              << std::endl;
-    std::cout << "  │ Subgroup          ═ Warp                         │"
-              << std::endl;
-    std::cout << "  │ Shared Memory     ═ Shared Memory                │"
-              << std::endl;
-    std::cout << "  │ Storage Buffer    ═ Global Memory                │"
-              << std::endl;
+
+    VkPhysicalDeviceVulkan12Features features12{};
+    features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features12.pNext = nullptr;
+
+    VkPhysicalDeviceFeatures2 deviceFeatures2{};
+    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    deviceFeatures2.pNext = &features12;
+
+    vkGetPhysicalDeviceFeatures2(device, &deviceFeatures2);
+
+    // Display some relevant Vulkan 1.2 compute features
+    std::cout << "  │ Shader Buffer Int64 Atomics: "
+              << (features12.shaderBufferInt64Atomics ? "Yes" : "No ")
+              << "                    │" << std::endl;
+    std::cout << "  │ Shader Shared Int64 Atomics: "
+              << (features12.shaderSharedInt64Atomics ? "Yes" : "No ")
+              << "                    │" << std::endl;
+    std::cout << "  │ Storage Buffer 8bit Access:  "
+              << (features12.storageBuffer8BitAccess ? "Yes" : "No ")
+              << "                    │" << std::endl;
+    std::cout << "  │ Uniform/Storage Buffer 8bit: "
+              << (features12.uniformAndStorageBuffer8BitAccess ? "Yes" : "No ")
+              << "                    │" << std::endl;
+    std::cout << "  │ Storage Push Constant 8:     "
+              << (features12.storagePushConstant8 ? "Yes" : "No ")
+              << "                    │" << std::endl;
+    std::cout << "  │ Shader Int8:                 "
+              << (features12.shaderInt8 ? "Yes" : "No ")
+              << "                    │" << std::endl;
+    std::cout << "  │ Vulkan Memory Model:         "
+              << (features12.vulkanMemoryModel ? "Yes" : "No ")
+              << "                    │" << std::endl;
+    std::cout << "  │ Shader Float16:              "
+              << (features12.shaderFloat16 ? "Yes" : "No ")
+              << "                    │" << std::endl;
     std::cout << "  └───────────────────────────────────────────────────┘"
               << std::endl;
+
+    // Continue with CUDA terminology reference...
 
     // Add a separator between devices
     std::cout
