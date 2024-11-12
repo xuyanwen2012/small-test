@@ -1,9 +1,5 @@
 #version 450
-
-// #extension GL_KHR_shader_subgroup_basic : enable
-// #extension GL_KHR_shader_subgroup_ballot : enable
-// #extension GL_KHR_shader_subgroup_arithmetic : enable
-// #extension GL_KHR_shader_subgroup_vote : enable
+#extension GL_KHR_vulkan_glsl : enable
 #extension GL_EXT_shader_explicit_arithmetic_types_int8 : enable
 
 #define morton_bits 30
@@ -152,45 +148,36 @@ void k_MakeOctNodes(uint i) {
   }
 }
 
-/*
-void k_LinkLeafNodes(int i ){
-
-    if(i<n_brt_nodes){
-        if(rt_hasLeafLeft[i] == 1){
-            int leaf_idx=rt_leftChild[i];
-            int leaf_level=rt_prefixN[i]/3+1;
-            int leaf_prefix=int(codes[leaf_idx]>>(morton_bits-(3*leaf_level)));
-            int which_child=leaf_prefix&0x7;
-            // walk up the radix tree until finding a node which contributes an
-            // octnode
-            int rt_node=i;
-            while(rt_node_counts[rt_node]==0){
-                rt_node=rt_parents[rt_node];
-            }
-            // the lowest octnode in the string contributed by rt_node will be
-the
-            // lowest index
-            int bottom_oct_idx= int(node_offsets[rt_node]);
-            SetLeaf(oct_nodes[bottom_oct_idx],which_child,leaf_idx);
-        }
-        if(rt_hasLeafRight[i] == 1){
-            int leaf_idx=rt_leftChild[i]+1;
-            int leaf_level=rt_prefixN[i]/3+1;
-            int leaf_prefix=int(codes[leaf_idx]>>(morton_bits-(3*leaf_level)));
-            int which_child=leaf_prefix&0x7;
-            int rt_node=i;
-            while(rt_node_counts[rt_node]==0){
-                rt_node=rt_parents[rt_node];
-            }
-            // the lowest octnode in the string contributed by rt_node will be
-the
-            // lowest index
-            int bottom_oct_idx= int(node_offsets[rt_node]);
-            SetLeaf(oct_nodes[bottom_oct_idx],which_child,leaf_idx);
-        }
+void k_LinkLeafNodes(int i) {
+  if (i < n_brt_nodes) {
+    if (rt_hasLeafLeft[i]) {
+      int leaf_idx = rt_leftChild[i];
+      int leaf_level = rt_prefixN[i] / 3 + 1;
+      int leaf_prefix =
+          int(codes[leaf_idx] >> (morton_bits - (3 * leaf_level)));
+      int which_child = leaf_prefix & 0x7;
+      int rt_node = i;
+      while (rt_node_counts[rt_node] == 0) {
+        rt_node = rt_parents[rt_node];
+      }
+      int bottom_oct_idx = int(node_offsets[rt_node]);
+      SetLeaf(oct_nodes[bottom_oct_idx], which_child, leaf_idx);
     }
+    if (rt_hasLeafRight[i]) {
+      int leaf_idx = rt_leftChild[i] + 1;
+      int leaf_level = rt_prefixN[i] / 3 + 1;
+      int leaf_prefix =
+          int(codes[leaf_idx] >> (morton_bits - (3 * leaf_level)));
+      int which_child = leaf_prefix & 0x7;
+      int rt_node = i;
+      while (rt_node_counts[rt_node] == 0) {
+        rt_node = rt_parents[rt_node];
+      }
+      int bottom_oct_idx = int(node_offsets[rt_node]);
+      SetLeaf(oct_nodes[bottom_oct_idx], which_child, leaf_idx);
+    }
+  }
 }
-*/
 
 void main() {
   const uint idx =
@@ -199,5 +186,9 @@ void main() {
 
   for (uint i = idx; i < n_brt_nodes; i += stride) {
     k_MakeOctNodes(i);
+  }
+
+  for (uint i = idx; i < n_brt_nodes; i += stride) {
+    k_LinkLeafNodes(int(i));
   }
 }
