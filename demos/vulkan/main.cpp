@@ -239,7 +239,7 @@ int main(int argc, char** argv) {
 
     // layout(local_size_x = 256) in;
 
-    auto prefix_n_buf = engine.buffer(n_unique * sizeof(uint32_t));
+    auto prefix_n_buf = engine.buffer(n_unique * sizeof(uint8_t));
     prefix_n_buf->zeros();
 
     auto has_leaf_left_buf = engine.buffer(n_unique * sizeof(bool));
@@ -297,29 +297,44 @@ int main(int argc, char** argv) {
 
     // layout(local_size_x = 512) in;
 
-    // auto edge_count_buf = engine.buffer(n_brt_nodes * sizeof(int));
-    // edge_count_buf->zeros();
+    auto edge_count_buf = engine.buffer(n_brt_nodes * sizeof(int));
+    edge_count_buf->zeros();
 
-    // struct {
-    //   int n_brt_nodes;
-    // } edge_count_push_constants = {static_cast<int>(n_brt_nodes)};
+    struct {
+      int n_brt_nodes;
+    } edge_count_push_constants = {static_cast<int>(n_brt_nodes)};
 
-    // auto edge_count_algo = engine.algorithm(
-    //     "edge_count.spv",
-    //     {prefix_n_buf, parent_buf, edge_count_buf},
-    //     512,
-    //     reinterpret_cast<const std::byte*>(&edge_count_push_constants),
-    //     sizeof(edge_count_push_constants));
+    auto edge_count_algo = engine.algorithm(
+        "edge_count.spv",
+        {prefix_n_buf, parent_buf, edge_count_buf},
+        512,
+        reinterpret_cast<const std::byte*>(&edge_count_push_constants),
+        sizeof(edge_count_push_constants));
 
-    // seq->record_commands_with_blocks(edge_count_algo.get(), num_blocks);
-    // seq->launch_kernel_async();
-    // seq->sync();
+    seq->record_commands_with_blocks(edge_count_algo.get(), num_blocks);
+    seq->launch_kernel_async();
+    seq->sync();
 
-    // // print 10 results
-    // auto edge_count_span = edge_count_buf->span<int>();
-    // for (auto i = 0; i < 10; ++i) {
-    //   spdlog::info("\tEdge count {}: {}", i, edge_count_span[i]);
-    // }
+    // print 10 results
+    auto edge_count_span = edge_count_buf->span<int>();
+    for (auto i = 0; i < 10; ++i) {
+      spdlog::info("\tEdge count {}: {}", i, edge_count_span[i]);
+    }
+
+    // Step 7: edge offsets (prefix sum), let use cpu for now
+
+    auto edge_offsets_buf = engine.buffer(n_brt_nodes * sizeof(int));
+    edge_offsets_buf->zeros();
+
+    std::partial_sum(edge_count_span.begin(),
+                     edge_count_span.end(),
+                     edge_offsets_buf->span<int>().begin());
+
+    // print 10 results
+    auto edge_offsets_span = edge_offsets_buf->span<int>();
+    for (auto i = 0; i < 10; ++i) {
+      spdlog::info("\tEdge offsets {}: {}", i, edge_offsets_span[i]);
+    }
   }
 
   spdlog::info("Done!");
