@@ -10,39 +10,48 @@
 #include "vulkan/buffer.hpp"
 #include "vulkan/engine.hpp"
 
-// struct Pipe {
-//   // ------------------------
-//   // Essential Data (CPU/GPU shared)
-//   // ------------------------
+// // ------------------------
+// // Essential Data
+// // ------------------------
+// int n_brt_nodes = UNINITIALIZED;
 
-//   // mutable
-//   int n_unique = UNINITIALIZED;
+// uint8_t* u_prefix_n;
+// bool* u_has_leaf_left;
+// bool* u_has_leaf_right;
+// int* u_left_child;
+// int* u_parents;
+struct RadixTree {
+  RadixTree() = delete;
 
-//   glm::vec4* u_points;
-//   morton_t* u_morton;
-//   morton_t* u_morton_alt;  // also used as the unique morton
-//   // RadixTree brt;
-//   int* u_edge_counts;
-//   int* u_edge_offsets;
-//   // Octree oct;
+  explicit RadixTree(Engine& engine, int n_brt_nodes)
+      : n_brt_nodes(n_brt_nodes), engine(engine) {
+    u_prefix_n = engine.buffer(n_brt_nodes * sizeof(uint8_t));
+    u_has_leaf_left = engine.buffer(n_brt_nodes * sizeof(bool));
+    u_has_leaf_right = engine.buffer(n_brt_nodes * sizeof(bool));
+    u_left_child = engine.buffer(n_brt_nodes * sizeof(int));
+    u_parents = engine.buffer(n_brt_nodes * sizeof(int));
+  }
 
-//   // read-only
-//   int n_points;
-//   float min_coord;
-//   float range;
-//   int seed;
-// };
+  int n_brt_nodes;
+
+  std::shared_ptr<Buffer> u_prefix_n;
+  std::shared_ptr<Buffer> u_has_leaf_left;
+  std::shared_ptr<Buffer> u_has_leaf_right;
+  std::shared_ptr<Buffer> u_left_child;
+  std::shared_ptr<Buffer> u_parents;
+
+  Engine& engine;
+};
 
 struct Pipe {
-  // ------------------------
-  // Essential Data (CPU/GPU shared)
-  // ------------------------
-  Pipe(Engine& engine,
-       const int n_points,
-       const float min_coord,
-       const float range,
-       const int seed,
-       const int num_blocks)
+  Pipe() = delete;
+
+  explicit Pipe(Engine& engine,
+                const int n_points,
+                const float min_coord,
+                const float range,
+                const int seed,
+                const int num_blocks)
       : n_points(n_points),
         min_coord(min_coord),
         range(range),
@@ -67,6 +76,9 @@ struct Pipe {
   std::shared_ptr<Buffer> u_edge_counts;
   std::shared_ptr<Buffer> u_edge_offsets;
 
+  // RadixTree brt;
+  std::unique_ptr<RadixTree> brt;
+
   // read-only
   const int n_points;
   const float min_coord;
@@ -81,6 +93,14 @@ struct Pipe {
   // ---------------------------------------------------------------------------
   // Methods
   // ---------------------------------------------------------------------------
+
+  void allocate_brt() {
+    if (n_unique == UNINITIALIZED) {
+      throw std::runtime_error("n_unique is UNINITIALIZED");
+    }
+
+    brt = std::make_unique<RadixTree>(engine, n_unique - 1);
+  }
 
   void init() {
     struct {
@@ -135,6 +155,28 @@ struct Pipe {
 
     spdlog::info("n_unique: {}", n_unique);
   }
+
+  void build_radix_tree() {
+    struct {
+      int n_unique;
+    } build_radix_tree_push_constants = {n_unique};
+
+    auto algo = engine.algorithm(
+        "build_radix_tree.spv",
+        {u_morton_alt,
+         brt->u_prefix_n,
+         brt->u_has_leaf_left,
+         brt->u_has_leaf_right,
+         brt->u_left_child,
+         brt->u_parents},
+        256,
+        reinterpret_cast<const std::byte*>(&build_radix_tree_push_constants),
+        sizeof(build_radix_tree_push_constants));
+
+    seq->record_commands_with_blocks(algo.get(), num_blocks);
+    seq->launch_kernel_async();
+    seq->sync();
+  }
 };
 
 int main(int argc, char** argv) {
@@ -163,10 +205,30 @@ int main(int argc, char** argv) {
   pipe.init();
   pipe.compute_morton();
   pipe.sort_morton();
+  pipe.remove_duplicates();
 
   // check if the morton codes are sorted
-  auto morton_span = pipe.u_morton_alt->span<morton_t>();
+  // auto morton_span = pipe.u_morton_alt->span<morton_t>();
   assert(std::ranges::is_sorted(morton_span));
+
+  pipe.allocate_brt();
+  pipe.build_radix_tree();
+
+  // print the radix tree first 10 nodes
+  auto prefix_n_span = pipe.brt->u_prefix_n->span<uint8_t>();
+  auto has_leaf_left_span = pipe.brt->u_has_leaf_left->span<bool>();
+  auto has_leaf_right_span = pipe.brt->u_has_leaf_right->span<bool>();
+  auto left_child_span = pipe.brt->u_left_child->span<int>();
+  auto parents_span = pipe.brt->u_parents->span<int>();
+
+  for (int i = 0; i < 10; ++i) {
+    spdlog::info("Node {}:", i);
+    spdlog::info("\tprefix_n: {}", prefix_n_span[i]);
+    spdlog::info("\thas_leaf_left: {}", has_leaf_left_span[i]);
+    spdlog::info("\thas_leaf_right: {}", has_leaf_right_span[i]);
+    spdlog::info("\tleft_child: {}", left_child_span[i]);
+    spdlog::info("\tparents: {}", parents_span[i]);
+  }
 
   spdlog::info("Done!");
   return EXIT_SUCCESS;
