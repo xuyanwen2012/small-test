@@ -334,7 +334,7 @@ int main(int argc, char** argv) {
   pipe.remove_duplicates();
 
   // check if the morton codes are sorted
-  // auto morton_span = pipe.u_morton_alt->span<morton_t>();
+  auto morton_span = pipe.u_morton_alt->span<morton_t>();
   assert(std::ranges::is_sorted(morton_span));
 
   pipe.allocate_brt();
