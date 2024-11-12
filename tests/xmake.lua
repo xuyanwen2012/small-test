@@ -56,3 +56,16 @@ target("test-vma")
     add_packages("gtest", "volk", "vulkan-memory-allocator")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
+
+-- ---------------------------------------------------------------------
+-- Vulkan Kernels
+-- ---------------------------------------------------------------------
+
+target("test-vk-kernels")
+    set_kind("binary")
+    add_includedirs("$(projectdir)/include")
+    add_files("vk-kernels/test-vk-kernels.cpp")
+    add_packages("gtest", "volk", "glm", "vulkan-memory-allocator", "spdlog")
+    add_deps("ppl-vulkan")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()

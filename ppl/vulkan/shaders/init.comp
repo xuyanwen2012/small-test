@@ -1,4 +1,5 @@
 #version 450
+#extension GL_KHR_vulkan_glsl : enable
 
 #define TAUS_STEP_1 (((z1 & 4294967294U) << 12) ^ (((z1 << 13) ^ z1) >> 19))
 #define TAUS_STEP_2 (((z2 & 4294967288U) << 4) ^ (((z2 << 2) ^ z2) >> 25))
@@ -8,13 +9,12 @@
 
 layout(set = 0, binding = 0) buffer RandomBuffer { vec4 random_buffer[]; };
 
-layout(push_constant) uniform PushConstants {
+layout(push_constant) uniform pc {
   int size;
   int min_val;
   int range;
   int seed;
-}
-push_constant;
+} push_constant;
 
 layout(local_size_x = 512) in;
 
