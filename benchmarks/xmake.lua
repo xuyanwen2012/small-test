@@ -30,10 +30,10 @@ target("bench-micro")
     add_packages("benchmark")
     if is_plat("android") then on_run(run_on_android) end
 
--- target("bench-cpu-just-kernel")
---     set_kind("binary")
---     add_includedirs("$(projectdir)/include")
---     add_files("cpu/just-kernel.cpp")
---     add_packages("benchmark", "glm")
---     add_deps("ppl")
---     if is_plat("android") then on_run(run_on_android) end
+target("bench-vk-kernels")
+    set_kind("binary")
+    add_includedirs("$(projectdir)/include")
+    add_files("vulkan/kernels.cpp")
+    add_packages("benchmark", "volk", "vulkan-memory-allocator", "glm", "spdlog")
+    add_deps("ppl-vulkan")
+    if is_plat("android") then on_run(run_on_android) end
