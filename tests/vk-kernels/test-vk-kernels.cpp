@@ -113,11 +113,10 @@ void VulkanKernelsParamTest::RunInitTestWithBlocks(int n_points,
                                                    int num_blocks) {
   struct {
     int n;
-    int min_val;
-    int range;
+    float min_coord;
+    float range;
     int seed;
-  } init_push_constants = {
-      n_points, static_cast<int>(min_coord), static_cast<int>(range), seed};
+  } init_push_constants = {n_points, min_coord, range, seed};
 
   auto seq = engine.sequence();
   auto u_points = engine.buffer(n_points * sizeof(glm::vec4));
