@@ -1,5 +1,5 @@
 # Project specific
-ppl/vulkan/shaders/compiled_shaders/
+ppl/vulkan/shaders/compiled_shaders/*.spv
 
 # Xmake cache
 .xmake/
