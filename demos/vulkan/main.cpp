@@ -335,6 +335,92 @@ int main(int argc, char** argv) {
     for (auto i = 0; i < 10; ++i) {
       spdlog::info("\tEdge offsets {}: {}", i, edge_offsets_span[i]);
     }
+
+    // Step 8: Octree build
+    // layout(set = 0, binding = 0) buffer OctreeNodes { OctNode oct_nodes[]; };
+    // layout(set = 0, binding = 1) buffer NodeOffsets { uint node_offsets[]; };
+    // layout(set = 0, binding = 2) buffer RtNodeCounts { int rt_node_counts[];
+    // }; layout(set = 0, binding = 3) buffer Codes { uint codes[]; };
+    // layout(set = 0, binding = 4) buffer PrefixN { uint8_t rt_prefixN[]; };
+    // layout(set = 0, binding = 5) buffer Parents { int rt_parents[]; };
+    // layout(set = 0, binding = 6) buffer RtLeftChild { int rt_leftChild[]; };
+    // layout(set = 0, binding = 7) buffer RtHasLeafLeft { bool
+    // rt_hasLeafLeft[]; }; layout(set = 0, binding = 8) buffer RtHasLeafRight {
+    // bool rt_hasLeafRight[]; };
+
+    // layout(push_constant) uniform Constants {
+    //   float min_coord;
+    //   float range;
+    //   int n_brt_nodes;
+    // };
+
+    // layout(local_size_x = 512) in;
+
+    struct OctNode {
+      int children[8];
+      glm::vec4 corner;
+      float cell_size;
+      int child_node_mask;
+      int child_leaf_mask;
+    };
+
+    // auto
+
+    auto octree_nodes_buf = engine.buffer(n_brt_nodes * sizeof(OctNode));
+    octree_nodes_buf->zeros();
+
+    // auto octree_node_offsets_buf = engine.buffer(n_brt_nodes * sizeof(uint));
+    // octree_node_offsets_buf->zeros();
+
+    // auto rt_node_counts_buf = engine.buffer(n_brt_nodes * sizeof(int));
+    // rt_node_counts_buf->zeros();
+
+    // NodeOffsets is the same as edge_offsets_buf
+    // RtNodeCounts is the same as edge_count_buf
+    // Codes is the same as unique_morton
+    // PrefixN is the same as prefix_n_buf
+    // Parents is the same as parent_buf
+    // RtLeftChild is the same as left_child_buf
+    // RtHasLeafLeft is the same as has_leaf_left_buf
+    // RtHasLeafRight is the same as has_leaf_right_buf
+
+    struct {
+      float min_coord;
+      float range;
+      int n_brt_nodes;
+    } octree_push_constants = {min_val, range, static_cast<int>(n_brt_nodes)};
+
+    auto octree_algo = engine.algorithm(
+        "octree.spv",
+        {
+            octree_nodes_buf,
+            edge_offsets_buf,
+            edge_count_buf,
+            unique_morton,
+            prefix_n_buf,
+            parent_buf,
+            left_child_buf,
+            has_leaf_left_buf,
+            has_leaf_right_buf,
+        },
+        512,
+        reinterpret_cast<const std::byte*>(&octree_push_constants),
+        sizeof(octree_push_constants));
+
+    seq->record_commands_with_blocks(octree_algo.get(), num_blocks);
+    seq->launch_kernel_async();
+    seq->sync();
+
+    // print 10 results
+    auto octree_nodes_span = octree_nodes_buf->span<OctNode>();
+    for (auto i = 0; i < 10; ++i) {
+      spdlog::info("\tOctree node {}: {}", i, octree_nodes_span[i].corner);
+      spdlog::info("\t\tCell size: {}", octree_nodes_span[i].cell_size);
+      spdlog::info("\t\tChild node mask: {:08b}",
+                   octree_nodes_span[i].child_node_mask);
+      spdlog::info("\t\tChild leaf mask: {:08b}",
+                   octree_nodes_span[i].child_leaf_mask);
+    }
   }
 
   spdlog::info("Done!");
