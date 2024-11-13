@@ -2,10 +2,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include <string>
+#include <string_view>
 #include <vector>
-
-#include 
 
 #include "buffer.hpp"
 
@@ -56,7 +54,6 @@ class Algorithm final : public VulkanResource<VkShaderModule> {
     create_parameters();
     create_pipeline();
   }
-
 
   ~Algorithm() override { destroy(); }
 
