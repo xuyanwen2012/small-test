@@ -12,9 +12,7 @@ Buffer::Buffer(std::shared_ptr<VkDevice> device_ptr,
                const VkBufferUsageFlags usage,
                const VmaMemoryUsage memory_usage,
                const VmaAllocationCreateFlags flags)
-    : VulkanResource(std::move(device_ptr)),
-      size_(size),
-      persistent_{(flags & VMA_ALLOCATION_CREATE_MAPPED_BIT) != 0} {
+    : VulkanResource(std::move(device_ptr)), size_(size) {
   spdlog::debug("Buffer::Buffer");
 
   const VkBufferCreateInfo buffer_create_info{

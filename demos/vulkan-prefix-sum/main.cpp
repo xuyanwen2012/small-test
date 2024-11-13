@@ -1,5 +1,6 @@
 #include <spdlog/spdlog.h>
 
+#include <cstdint>
 #include <numeric>
 
 #include "vulkan/engine.hpp"
@@ -16,7 +17,7 @@ int main() {
   // constexpr auto n_blocks = 2;
 
   auto input = engine.buffer(n_input * sizeof(uint32_t));
-  input->fill(1);
+  input->ones();
 
   auto output = engine.buffer(n_input * sizeof(uint32_t));
   output->zeros();
