@@ -5,11 +5,35 @@
 #include <string>
 #include <vector>
 
+#include 
+
 #include "buffer.hpp"
 
 class Algorithm final : public VulkanResource<VkShaderModule> {
  public:
   Algorithm() = delete;
+
+  // explicit Algorithm(std::shared_ptr<VkDevice> device_ptr,
+  //                    std::string_view spirv_filename,
+  //                    const std::vector<std::shared_ptr<Buffer>> &buffers,
+  //                    uint32_t threads_per_block,
+  //                    const std::byte *push_constants_data,
+  //                    const uint32_t push_constants_size)
+  //     : VulkanResource<VkShaderModule>(std::move(device_ptr)),
+  //       spirv_filename_(spirv_filename),
+  //       usm_buffers_(buffers),
+  //       threads_per_block_(threads_per_block) {
+  //   spdlog::debug(
+  //       "Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
+  //       spirv_filename_,
+  //       buffers.size());
+
+  //   set_push_constants(push_constants_data, push_constants_size);
+
+  //   create_shader_module();
+  //   create_parameters();
+  //   create_pipeline();
+  // }
 
   explicit Algorithm(std::shared_ptr<VkDevice> device_ptr,
                      std::string_view spirv_filename,
@@ -32,6 +56,7 @@ class Algorithm final : public VulkanResource<VkShaderModule> {
     create_parameters();
     create_pipeline();
   }
+
 
   ~Algorithm() override { destroy(); }
 

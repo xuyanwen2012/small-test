@@ -82,3 +82,11 @@ target("demo-vulkan-kernel-sort")
 target_end()
 
 
+target("demo-vulkan-reflect")
+    set_kind("binary")
+    add_files("vulkan-reflect/main.cpp")
+    add_includedirs("$(projectdir)/include")
+    add_packages("spdlog", "spirv-reflect")
+    add_deps("ppl-vulkan")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()

@@ -53,7 +53,7 @@ constexpr uint32_t SPIRV_MAGIC = 0x07230203;
  *   - The file is not a valid SPIR-V shader (wrong magic number)
  */
 [[nodiscard]] inline std::vector<uint32_t> load_shader_from_file(
-    const std::string& filename) {
+    const std::string_view filename) {
   const fs::path shader_path = fs::path(shader_base_path) / filename;
 
   spdlog::info("loading shader path: {}", shader_path.string());
@@ -78,7 +78,7 @@ constexpr uint32_t SPIRV_MAGIC = 0x07230203;
   // words
   std::vector<uint32_t> buffer(file_size / sizeof(uint32_t));
   file.seekg(0);  // Return to start of file
-  file.read(reinterpret_cast<char*>(buffer.data()), file_size);
+  file.read(reinterpret_cast<char *>(buffer.data()), file_size);
 
   file.close();
 
