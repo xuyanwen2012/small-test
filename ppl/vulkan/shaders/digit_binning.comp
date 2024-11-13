@@ -2,6 +2,8 @@
 
 #extension GL_KHR_shader_subgroup_basic : require
 #extension GL_KHR_memory_scope_semantics : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+#extension GL_EXT_scalar_block_layout : require
 
 layout(local_size_x = 256) in;
 
@@ -10,7 +12,7 @@ const uint BASE_BITS = 8;
 const uint BASE = 1 << BASE_BITS;  // 256
 const uint MASK = BASE - 1;
 
-layout(std140, push_constant) uniform PushConstantBlock {
+layout(push_constant) uniform PushConstantBlock {
   uint n;
   uint shift;
 }
@@ -23,12 +25,15 @@ layout(set = 0, binding = 2) buffer SharedBucketBuffer {
 };
 
 shared uint u_local_histogram[BASE];
+shared uint u_local_offsets[BASE];
 
 uint getDigit(uint value, uint shift) { return (value >> shift) & MASK; }
 
 void main() {
-  uint tid = gl_GlobalInvocationID.x;
-  uint lid = gl_LocalInvocationID.x;
+  // anotate the follow with CUDA terminology
+  uint tid = gl_GlobalInvocationID.x;  //
+  uint lid = gl_LocalInvocationID.x;   // thread_idx.x
+  uint wgid = gl_WorkGroupID.x;        // block_idx.x
 
   // Initialize local histogram
   if (lid < BASE) {
@@ -46,9 +51,37 @@ void main() {
   barrier();
 
   // Merge local histogram into global histogram
-  // Only let the first threads in each workgroup handle this
   if (lid < BASE) {
-    // atomicAdd is thread-safe for global memory too
     atomicAdd(u_shared_bucket[lid], u_local_histogram[lid]);
+  }
+
+  barrier();
+
+  // Perform exclusive prefix sum on local histogram
+  if (lid < BASE) {
+    uint sum = 0;
+    for (uint i = 0; i < lid; i++) {
+      sum += u_local_histogram[i];
+    }
+    u_local_offsets[lid] = sum;
+  }
+
+  barrier();
+
+  // Scatter elements to their final positions
+  if (tid < pc.n) {
+    uint value = u_in_data[tid];
+    uint digit = getDigit(value, pc.shift);
+
+    // Get position in global output array
+    uint global_offset = 0;
+    for (uint i = 0; i < wgid; i++) {
+      global_offset += u_local_histogram[digit];
+    }
+
+    uint local_pos = atomicAdd(u_local_offsets[digit], 1);
+    uint final_pos = global_offset + local_pos;
+
+    u_out_data[final_pos] = value;
   }
 }
