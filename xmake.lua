@@ -40,6 +40,8 @@ add_requires("benchmark 1.9.*", {alias = "benchmark"})
 -- Vulkan requirements
 add_requires("vulkan-headers", "volk")
 add_requires("vulkan-memory-allocator")
+add_requires("spirv-cross")
+
 -- add_requires("vulkan-validationlayers")
 
 local ANDROID_CONFIG = {
