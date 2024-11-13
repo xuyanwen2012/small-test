@@ -25,8 +25,8 @@
 
 layout(local_size_x = 768) in;
 
-layout(set = 0, binding = 0) buffer Data { vec4 data[]; };
-layout(set = 0, binding = 1) buffer MortonKeys { uint morton_keys[]; };
+layout(set = 0, binding = 0) readonly buffer Data { vec4 data[]; };
+layout(set = 0, binding = 1) writeonly buffer MortonKeys { uint morton_keys[]; };
 
 layout(push_constant) uniform Constants {
   uint n;

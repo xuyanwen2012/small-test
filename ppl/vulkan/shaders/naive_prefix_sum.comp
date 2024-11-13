@@ -1,0 +1,83 @@
+// ----------------------------------------------------------------------------
+// Purpose:
+//     First pass of block-wise prefix sum operation.
+//     Computes local prefix sums within each workgroup and outputs
+//     both local sums and block sums for the next pass.
+//
+// Input:
+//     - Buffer 0: Array of uint values to scan
+//     - Push Constants:
+//         * inputSize: Number of elements to process
+//         * blockSize: Number of elements per block (must match workgroup size)
+//
+// Output:
+//     - Buffer 1: Array of uint values containing local prefix sums
+//     - Buffer 2: Array of uint values containing block sums
+//
+// Workgroup Size: 256 threads (must match blockSize)
+// Expected Dispatch: ceil(inputSize / blockSize) workgroups
+// ----------------------------------------------------------------------------
+
+#version 450
+#extension GL_KHR_vulkan_glsl : enable
+
+layout(local_size_x = 256) in;
+
+layout(std430, set = 0, binding = 0) readonly buffer InputBuffer {
+  uint inputData[];
+};
+layout(std430, set = 0, binding = 1) writeonly buffer OutputBuffer {
+  uint outputData[];
+};
+layout(std430, set = 0, binding = 2) writeonly buffer BlockSumsBuffer {
+  uint blockSums[];
+};
+
+layout(push_constant) uniform Constants {
+  uint inputSize;
+  uint blockSize;  // Must match workgroup size
+};
+
+shared uint sharedData[256];  // Must match workgroup size
+
+void main() {
+  uint lid = gl_LocalInvocationID.x;
+  uint blockID = gl_WorkGroupID.x;
+  uint gid = blockID * blockSize + lid;
+
+  // Load data into shared memory
+  if (gid < inputSize) {
+    sharedData[lid] = inputData[gid];
+  } else {
+    sharedData[lid] = 0;
+  }
+  barrier();
+
+  // Up-sweep phase (reduce)
+  for (uint stride = 1; stride < blockSize; stride *= 2) {
+    uint index = (lid + 1) * 2 * stride - 1;
+    if (index < blockSize) {
+      sharedData[index] += sharedData[index - stride];
+    }
+    barrier();
+  }
+
+  // Store the block sum
+  if (lid == blockSize - 1) {
+    blockSums[blockID] = sharedData[lid];
+  }
+
+  // Down-sweep phase (scan)
+  for (uint stride = blockSize / 4; stride > 0; stride /= 2) {
+    uint index = (lid + 1) * 2 * stride - 1;
+    if (index + stride < blockSize) {
+      sharedData[index + stride] += sharedData[index];
+    }
+    barrier();
+  }
+
+  // Write results to output
+  if (gid < inputSize) {
+    outputData[gid] = sharedData[lid];
+  }
+}

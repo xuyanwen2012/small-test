@@ -1,0 +1,28 @@
+#version 450
+
+layout(local_size_x = 256) in;
+
+layout(std430, set = 0, binding = 0) readonly buffer BlockSumsBuffer {
+  uint blockSums[];
+};
+layout(std430, set = 0, binding = 1) buffer OutputBuffer { uint outputData[]; };
+
+layout(push_constant) uniform Constants {
+  uint inputSize;
+  uint blockSize;
+};xmake
+
+void main() {
+  uint gid = gl_GlobalInvocationID.x;
+  if (gid >= inputSize) return;
+
+  uint blockID = gid / blockSize;
+  if (blockID == 0) return;  // First block doesn't need adjustment
+
+  // Add the prefix sum of previous blocks
+  uint sum = 0;
+  for (uint i = 0; i < blockID; i++) {
+    sum += blockSums[i];
+  }
+  outputData[gid] += sum;
+}

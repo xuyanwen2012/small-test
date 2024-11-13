@@ -44,7 +44,8 @@ class Buffer : public VulkanResource<VkBuffer> {
   // fill the buffer with the given value
   template <typename T>
   void fill(const T& value) {
-    std::memset(map<T>(), value, size_);
+    // std::fill(map<T>(), map<T>() + size_ / sizeof(T), value);
+    std::fill_n(map<T>(), size_ / sizeof(T), value);
   }
 
   void zeros() { fill(0); }

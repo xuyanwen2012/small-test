@@ -29,26 +29,6 @@ target("demo-vulkan-info")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
 
--- target("demo-zheyuan-vulkan")
---     set_kind("binary")
---     add_files("zheyuan-vulkan/main.cpp")
---     add_includedirs("$(projectdir)/include")
---     add_packages("glm", "volk", "vulkan-headers", "vulkan-validationlayers", "spdlog")
---     -- add_deps("ppl-vulkan")
---     if is_plat("android") then on_run(run_on_android) end
--- target_end()
-
-
--- target("demo-vma-debug")
---     set_kind("binary")
---     add_includedirs("$(projectdir)/include")
---     add_files("vma-debug/*.cpp")
---     add_deps("ppl-vulkan")
---     add_packages("spdlog", "volk", "vulkan-memory-allocator")
---     if is_plat("android") then on_run(run_on_android) end
--- target_end()
-
-
 function compile_shaders()
     local shader_files = os.files("$(projectdir)/ppl/vulkan/shaders/*.comp")
 
@@ -60,13 +40,6 @@ function compile_shaders()
         os.run(command)
     end
 end
-
--- function copy_shaders(target)
---     local shader_dir = "$(projectdir)/ppl/vulkan/shaders/compiled_shaders"
---     -- local remote_path = "/data/local/tmp/shaders"
---     -- local remote_path = -- target's exe
---     os.run("adb push " .. shader_dir .. " " .. remote_path)
--- end
 
 target("demo-vulkan")
     set_kind("binary")
@@ -86,4 +59,13 @@ target("demo-vulkan-pipe")
     add_packages("glm", "spdlog", "volk", "vulkan-memory-allocator")
     if is_plat("android") then on_run(run_on_android) end
     after_build(compile_shaders)
+target_end()
+
+target("demo-vulkan-prefix-sum")
+    set_kind("binary")
+    add_files("vulkan-prefix-sum/main.cpp")
+    add_includedirs("$(projectdir)/include")
+    add_deps("ppl-vulkan")
+    add_packages("glm", "spdlog", "volk", "vulkan-memory-allocator")
+    if is_plat("android") then on_run(run_on_android) end
 target_end()
