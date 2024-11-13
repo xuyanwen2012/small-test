@@ -14,7 +14,9 @@ int main() {
   constexpr auto n_threads = 256;  // defined in the shader
   constexpr auto n_blocks = (n_input + n_threads - 1) / n_threads;
 
-  // constexpr auto n_blocks = 2;
+  // ---------------------------------------------------------------------------
+  // Prepare the data
+  // ---------------------------------------------------------------------------
 
   auto input = engine.buffer(n_input * sizeof(uint32_t));
   input->ones();
@@ -30,6 +32,10 @@ int main() {
     uint block_size;  // Must match workgroup size
   } pc = {n_input, n_threads};
 
+  // ---------------------------------------------------------------------------
+  // Run the algorithm
+  // ---------------------------------------------------------------------------
+
   auto algo = engine.algorithm("naive_prefix_sum.spv",
                                {
                                    input,
@@ -43,7 +49,7 @@ int main() {
   auto seq = engine.sequence();
   seq->record_commands_with_blocks(algo.get(), n_blocks);
   seq->launch_kernel_async();
-  seq->sync();
+  // seq->sync();
 
   auto algo2 = engine.algorithm("block_add.spv",
                                 {
@@ -59,10 +65,10 @@ int main() {
   seq2->launch_kernel_async();
   seq2->sync();
 
-  // expected result
+  // ---------------------------------------------------------------------------
+  // Check the result
+  // ---------------------------------------------------------------------------
 
-  // auto expected = input->span<uint32_t>();
-  // make a copy of the input
   std::vector<uint32_t> cpu_input(n_input);
   std::ranges::copy(input->span<uint32_t>(), cpu_input.begin());
 
@@ -74,8 +80,13 @@ int main() {
     spdlog::info("[{}] {} {}", i, output->span<uint32_t>()[i], cpu_expected[i]);
   }
 
+  // print block sum
+  for (auto s : block_sums->span<uint32_t>()) {
+    spdlog::info("block sum: {}", s);
+  }
+
   bool is_equal = std::ranges::equal(output->span<uint32_t>(), cpu_expected);
-  spdlog::info("Result: {}", is_equal);
+  spdlog::info("CPU and GPU result {} equal", is_equal ? "are" : "are not");
 
   return 0;
 }
