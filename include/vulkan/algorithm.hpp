@@ -7,7 +7,7 @@
 
 #include "buffer.hpp"
 
-class Algorithm : public VulkanResource<VkShaderModule> {
+class Algorithm final : public VulkanResource<VkShaderModule> {
  public:
   Algorithm() = delete;
 

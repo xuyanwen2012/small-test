@@ -1,0 +1,54 @@
+#version 450
+
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_memory_scope_semantics : require
+
+layout(local_size_x = 256) in;
+
+// Define constants
+const uint BASE_BITS = 8;
+const uint BASE = 1 << BASE_BITS;  // 256
+const uint MASK = BASE - 1;
+
+layout(std140, push_constant) uniform PushConstantBlock {
+  uint n;
+  uint shift;
+}
+pc;
+
+layout(set = 0, binding = 0) buffer InputBuffer { uint u_in_data[]; };
+layout(set = 0, binding = 1) buffer OutputBuffer { uint u_out_data[]; };
+layout(set = 0, binding = 2) buffer SharedBucketBuffer {
+  uint u_shared_bucket[];
+};
+
+shared uint u_local_histogram[BASE];
+
+uint getDigit(uint value, uint shift) { return (value >> shift) & MASK; }
+
+void main() {
+  uint tid = gl_GlobalInvocationID.x;
+  uint lid = gl_LocalInvocationID.x;
+
+  // Initialize local histogram
+  if (lid < BASE) {
+    u_local_histogram[lid] = 0;
+  }
+
+  barrier();
+
+  // Compute local histogram
+  if (tid < pc.n) {
+    uint digit = getDigit(u_in_data[tid], pc.shift);
+    atomicAdd(u_local_histogram[digit], 1);
+  }
+
+  barrier();
+
+  // Merge local histogram into global histogram
+  // Only let the first threads in each workgroup handle this
+  if (lid < BASE) {
+    // atomicAdd is thread-safe for global memory too
+    atomicAdd(u_shared_bucket[lid], u_local_histogram[lid]);
+  }
+}

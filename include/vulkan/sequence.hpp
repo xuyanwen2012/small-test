@@ -4,7 +4,7 @@
 #include "base_engine.hpp"
 #include "vulkan_resource.hpp"
 
-class Sequence : public VulkanResource<VkCommandBuffer> {
+class Sequence final : public VulkanResource<VkCommandBuffer> {
  public:
   explicit Sequence(std::shared_ptr<VkDevice> device_ptr,
                     VkQueue queue,
