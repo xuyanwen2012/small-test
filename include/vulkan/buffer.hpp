@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <cstring>
+#include <random>
 #include <span>
 #include <vector>
 
@@ -83,6 +85,29 @@ class Buffer : public VulkanResource<VkBuffer> {
 
   void zeros() { fill(0); }
   void ones() { fill(1); }
+
+  template <typename T>
+  void random(const T min, const T range, const int seed = 114514) {
+    std::mt19937 gen(seed);
+    if constexpr (std::floating_point<T>) {
+      // For floating point types (float, double, long double)
+      std::uniform_real_distribution<T> dis(min, min + range);
+      std::ranges::generate(span<T>(), [&]() { return dis(gen); });
+    } else if constexpr (std::integral<T>) {
+      // For integer types (int, long, unsigned int, etc.)
+      std::uniform_int_distribution<T> dis(min, min + range);
+      std::ranges::generate(span<T>(), [&]() { return dis(gen); });
+    } else {
+      static_assert(std::floating_point<T> || std::integral<T>,
+                    "random() only supports floating point or integral types");
+    }
+  }
+
+  template <typename T>
+  void copy_from(const std::vector<T>& other) {
+    assert(size_ == other.size() * sizeof(T));
+    std::memcpy(mapped_data_, other.data(), size_);
+  }
 
   // ---------------------------------------------------------------------------
   // getters

@@ -1,0 +1,76 @@
+#version 450
+
+layout(local_size_x = 256) in;
+
+// Input and output buffers
+layout(binding = 0) buffer InputBuffer { uint data[]; };
+layout(binding = 1) buffer OutputBuffer { uint sortedData[]; };
+
+// Temporary storage for counting bits
+shared uint prefixSum[256];  // Use fixed size instead of gl_WorkGroupSize.x * 2
+
+void main() {
+    uint gid = gl_GlobalInvocationID.x;
+    uint local_id = gl_LocalInvocationID.x;
+    uint group_id = gl_WorkGroupID.x;
+    uint local_size = gl_WorkGroupSize.x;
+
+    // Load initial value
+    uint value = 0;
+    if (gid < data.length()) {
+        value = data[gid];
+    }
+
+    // Radix sort - process each bit
+    for (uint bit = 0; bit < 32; bit++) {
+        uint bit_value = (value >> bit) & 1;
+        
+        // Count zeros in this workgroup
+        prefixSum[local_id] = (bit_value == 0) ? 1 : 0;
+        barrier();
+
+        // Parallel prefix sum within workgroup
+        for (uint stride = 1; stride < local_size; stride *= 2) {
+            uint temp = 0;
+            if (local_id >= stride) {
+                temp = prefixSum[local_id - stride];
+            }
+            barrier();
+            
+            if (local_id >= stride) {
+                prefixSum[local_id] += temp;
+            }
+            barrier();
+        }
+
+        // Calculate position
+        uint zeros_before = 0;
+        if (local_id > 0) {
+            zeros_before = prefixSum[local_id - 1];
+        }
+        uint total_zeros = prefixSum[local_size - 1];
+        
+        // Calculate final position
+        uint position;
+        if (bit_value == 0) {
+            position = zeros_before;
+        } else {
+            position = total_zeros + (gid - zeros_before);
+        }
+
+        // Write to output
+        if (gid < data.length()) {
+            sortedData[position] = value;
+        }
+        
+        // Sync and update for next iteration
+        barrier();
+        memoryBarrierBuffer();
+        
+        if (gid < data.length()) {
+            value = sortedData[gid];
+        }
+        barrier();
+        memoryBarrierBuffer();
+    }
+}

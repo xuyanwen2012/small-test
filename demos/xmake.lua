@@ -61,11 +61,24 @@ target("demo-vulkan-pipe")
     after_build(compile_shaders)
 target_end()
 
-target("demo-vulkan-prefix-sum")
+-- Vulkan kernels --------------------------------------------------------------
+
+target("demo-vulkan-kernel-prefix-sum")
     set_kind("binary")
-    add_files("vulkan-prefix-sum/main.cpp")
+    add_files("vulkan-kernels/prefix_sum.cpp")
     add_includedirs("$(projectdir)/include")
     add_deps("ppl-vulkan")
     add_packages("glm", "spdlog", "volk", "vulkan-memory-allocator")
     if is_plat("android") then on_run(run_on_android) end
 target_end()
+
+target("demo-vulkan-kernel-sort")
+    set_kind("binary")
+    add_files("vulkan-kernels/sort.cpp")
+    add_includedirs("$(projectdir)/include")
+    add_deps("ppl-vulkan")
+    add_packages("glm", "spdlog", "volk", "vulkan-memory-allocator")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()
+
+
