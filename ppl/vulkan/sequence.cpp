@@ -7,10 +7,11 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 Sequence::Sequence(std::shared_ptr<VkDevice> device_ptr,
-    const VkQueue queue,
-    const uint32_t compute_queue_index): VulkanResource(std::move(device_ptr)),
-                                         queue_(queue),
-                                         compute_queue_index_(compute_queue_index) {
+                   const VkQueue queue,
+                   const uint32_t compute_queue_index)
+    : VulkanResource(std::move(device_ptr)),
+      queue_(queue),
+      compute_queue_index_(compute_queue_index) {
   create_sync_objects();
   create_command_pool();
   create_command_buffer();

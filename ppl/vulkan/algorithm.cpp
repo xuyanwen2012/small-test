@@ -6,13 +6,14 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 Algorithm::Algorithm(std::shared_ptr<VkDevice> device_ptr,
-    std::string_view spirv_filename,
-    const std::vector<std::shared_ptr<Buffer>>& buffers,
-    const uint32_t push_constants_size): VulkanResource(std::move(device_ptr)),
-                                         spirv_filename_(spirv_filename),
-                                         usm_buffers_(buffers),
-                                         push_constants_data_(push_constants_size),
-                                         push_constants_size_(push_constants_size) {
+                     std::string_view spirv_filename,
+                     const std::vector<std::shared_ptr<Buffer>>& buffers,
+                     const uint32_t push_constants_size)
+    : VulkanResource(std::move(device_ptr)),
+      spirv_filename_(spirv_filename),
+      usm_buffers_(buffers),
+      push_constants_data_(push_constants_size),
+      push_constants_size_(push_constants_size) {
   spdlog::debug(
       "Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
       spirv_filename_,
@@ -136,8 +137,10 @@ void Algorithm::create_pipeline() {
   };
 
   spdlog::debug("Creating compute pipeline with:");
-  spdlog::debug("  Shader module handle: {}", static_cast<void*>(this->get_handle()));
-  spdlog::debug("  Pipeline layout handle: {}", static_cast<void*>(pipeline_layout_));
+  spdlog::debug("  Shader module handle: {}",
+                static_cast<void*>(this->get_handle()));
+  spdlog::debug("  Pipeline layout handle: {}",
+                static_cast<void*>(pipeline_layout_));
   spdlog::debug("  Entry point name: {}", p_name);
 
   check_vk_result(vkCreateComputePipelines(*device_ptr_,
@@ -235,7 +238,7 @@ void Algorithm::update_descriptor_sets() const {
 
 // this method update the descriptor sets with the buffers provided.
 void Algorithm::update_descriptor_sets_with_buffers(
-    const std::vector<std::shared_ptr<Buffer>> &buffers) const {
+    const std::vector<std::shared_ptr<Buffer>>& buffers) const {
   std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets;
   compute_write_descriptor_sets.reserve(buffers.size());
   std::vector<VkDescriptorBufferInfo> buffer_infos(buffers.size());
