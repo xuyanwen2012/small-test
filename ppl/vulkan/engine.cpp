@@ -4,7 +4,7 @@
 
 Engine::~Engine() { destroy(); }
 
-void Engine::destroy() {
+void Engine::destroy() const {
   spdlog::debug("Engine::destroy()");
 
   if (manage_resources_ && !buffers_.empty()) {

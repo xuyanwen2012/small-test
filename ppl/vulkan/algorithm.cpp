@@ -5,6 +5,29 @@
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
+Algorithm::Algorithm(std::shared_ptr<VkDevice> device_ptr,
+    std::string_view spirv_filename,
+    const std::vector<std::shared_ptr<Buffer>>& buffers,
+    const uint32_t push_constants_size): VulkanResource(std::move(device_ptr)),
+                                         spirv_filename_(spirv_filename),
+                                         usm_buffers_(buffers),
+                                         push_constants_data_(push_constants_size),
+                                         push_constants_size_(push_constants_size) {
+  spdlog::debug(
+      "Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
+      spirv_filename_,
+      buffers.size());
+
+  create_shader_module();
+
+  create_descriptor_set_layout();
+  create_descriptor_pool();
+  allocate_descriptor_sets();
+  update_descriptor_sets();
+
+  create_pipeline();
+}
+
 void Algorithm::destroy() {
   spdlog::debug("Algorithm::destroy()");
 
@@ -113,8 +136,8 @@ void Algorithm::create_pipeline() {
   };
 
   spdlog::debug("Creating compute pipeline with:");
-  spdlog::debug("  Shader module handle: {}", (void *)this->get_handle());
-  spdlog::debug("  Pipeline layout handle: {}", (void *)pipeline_layout_);
+  spdlog::debug("  Shader module handle: {}", static_cast<void*>(this->get_handle()));
+  spdlog::debug("  Pipeline layout handle: {}", static_cast<void*>(pipeline_layout_));
   spdlog::debug("  Entry point name: {}", p_name);
 
   check_vk_result(vkCreateComputePipelines(*device_ptr_,
@@ -133,7 +156,7 @@ void Algorithm::create_shader_module() {
   const VkShaderModuleCreateInfo create_info = {
       .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
       .codeSize = spirv_binary.size() * sizeof(uint32_t),
-      .pCode = reinterpret_cast<const uint32_t *>(spirv_binary.data()),
+      .pCode = spirv_binary.data(),
   };
 
   check_vk_result(vkCreateShaderModule(
@@ -143,7 +166,7 @@ void Algorithm::create_shader_module() {
 }
 
 // this method send the buffer data to the shader
-void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
+void Algorithm::record_bind_core(const VkCommandBuffer cmd_buf) const {
   spdlog::debug("Algorithm::record_bind_core()");
 
   vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_);
@@ -158,7 +181,7 @@ void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
 }
 
 // this method send the push constants to the shader
-void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
+void Algorithm::record_bind_push(const VkCommandBuffer cmd_buf) const {
   spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
                 push_constants_size_);
 
@@ -175,15 +198,15 @@ void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
 }
 
 // this method dispatch the kernel with the number of blocks provided.
-void Algorithm::record_dispatch_with_blocks(VkCommandBuffer cmd_buf,
-                                            uint32_t n_blocks) const {
+void Algorithm::record_dispatch_with_blocks(const VkCommandBuffer cmd_buf,
+                                            uint32_t n_blocks) {
   spdlog::debug("Algorithm::record_dispatch_with_blocks, n_blocks: {}",
                 n_blocks);
 
   vkCmdDispatch(cmd_buf, n_blocks, 1u, 1u);
 }
 
-void Algorithm::update_descriptor_sets() {
+void Algorithm::update_descriptor_sets() const {
   update_descriptor_sets_with_buffers(usm_buffers_);
   //   std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets;
   //   compute_write_descriptor_sets.reserve(usm_buffers_.size());
@@ -212,8 +235,7 @@ void Algorithm::update_descriptor_sets() {
 
 // this method update the descriptor sets with the buffers provided.
 void Algorithm::update_descriptor_sets_with_buffers(
-    const std::vector<std::shared_ptr<Buffer>> &buffers) {
-      
+    const std::vector<std::shared_ptr<Buffer>> &buffers) const {
   std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets;
   compute_write_descriptor_sets.reserve(buffers.size());
   std::vector<VkDescriptorBufferInfo> buffer_infos(buffers.size());
@@ -223,7 +245,7 @@ void Algorithm::update_descriptor_sets_with_buffers(
     compute_write_descriptor_sets.emplace_back(VkWriteDescriptorSet{
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstSet = descriptor_set_,
-        .dstBinding = static_cast<uint32_t>(i),
+        .dstBinding = i,
         .dstArrayElement = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,

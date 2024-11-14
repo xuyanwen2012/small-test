@@ -1,7 +1,7 @@
 #include "vulkan/vk_helper.hpp"
 
 // Helper function to convert VkResult to a readable string
-[[nodiscard]] const char* VkResultToString(VkResult result) {
+[[nodiscard]] const char* VkResultToString(const VkResult result) {
   switch (result) {
     case VK_SUCCESS:
       return "VK_SUCCESS";

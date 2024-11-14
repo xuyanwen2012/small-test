@@ -9,12 +9,12 @@
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
-VmaAllocator BaseEngine::vma_allocator;
+VmaAllocator BaseEngine::vma_allocator_;
 
-void BaseEngine::destroy() {
+void BaseEngine::destroy() const {
   spdlog::debug("BaseEngine::destroy()");
 
-  vmaDestroyAllocator(vma_allocator);
+  vmaDestroyAllocator(vma_allocator_);
   vkDestroyDevice(device_, nullptr);
   vkDestroyInstance(instance_, nullptr);
 }
@@ -28,7 +28,7 @@ void BaseEngine::initialize_device() {
   }
 
   // Add validation layer check
-  constexpr const char* validation_layer_name = "VK_LAYER_KHRONOS_validation";
+  constexpr auto validation_layer_name = "VK_LAYER_KHRONOS_validation";
   bool validation_layers_available = false;
 
   uint32_t layer_count;
@@ -168,10 +168,10 @@ void BaseEngine::initialize_device() {
 
   // print some information about what we created
   spdlog::debug("\tQueue family index: {}", compute_queue_index_);
-  spdlog::debug("\tQueue: {}", (uint64_t)queue_);
+  spdlog::debug("\tQueue: {}", reinterpret_cast<uint64_t>(queue_));
 }
 
-void BaseEngine::vma_initialization() {
+void BaseEngine::vma_initialization() const {
   const VmaVulkanFunctions vulkan_functions{
       .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
       .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
@@ -186,7 +186,7 @@ void BaseEngine::vma_initialization() {
       .vulkanApiVersion = VK_API_VERSION_1_3,
   };
 
-  if (vmaCreateAllocator(&vma_allocator_create_info, &vma_allocator) !=
+  if (vmaCreateAllocator(&vma_allocator_create_info, &vma_allocator_) !=
       VK_SUCCESS) {
     spdlog::error("Failed to create VMA allocator");
     return;

@@ -23,11 +23,11 @@ int main() {
   auto debug_output2_buf = engine.typed_buffer<uint32_t>(n_input);
   debug_output2_buf->zeros();
 
-  auto algo = engine.algorithm(
+  const auto algo = engine.algorithm(
       "print-128.spv",
       {u_input_buf, u_output_buf, debug_output1_buf, debug_output2_buf},
       0);
-  auto seq = engine.sequence();
+  const auto seq = engine.sequence();
 
   //   algo->update_descriptor_sets_with_buffers({u_input_buf, u_output_buf});
   seq->record_commands_with_blocks(algo.get(), 1);

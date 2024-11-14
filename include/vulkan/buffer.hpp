@@ -48,7 +48,7 @@ class Buffer : public VulkanResource<VkBuffer> {
                       VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT |
                       VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
-  ~Buffer() override { destroy(); }
+  ~Buffer() override { Buffer::destroy(); }
 
  protected:
   void destroy() override;

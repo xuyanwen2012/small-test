@@ -8,16 +8,9 @@ class Sequence final : public VulkanResource<VkCommandBuffer> {
  public:
   explicit Sequence(std::shared_ptr<VkDevice> device_ptr,
                     VkQueue queue,
-                    uint32_t compute_queue_index)
-      : VulkanResource<VkCommandBuffer>(std::move(device_ptr)),
-        queue_(queue),
-        compute_queue_index_(compute_queue_index) {
-    create_sync_objects();
-    create_command_pool();
-    create_command_buffer();
-  }
+                    uint32_t compute_queue_index);
 
-  ~Sequence() override { destroy(); }
+  ~Sequence() override { Sequence::destroy(); }
 
  protected:
   void destroy() override;
@@ -30,28 +23,12 @@ class Sequence final : public VulkanResource<VkCommandBuffer> {
   void cmd_begin() const;
   void cmd_end() const;
 
-  // /**
-  //  * @brief Record the commands of an Algorithm. It will bind pipeline, push
-  //  * constants, and dispatch.
-  //  *
-  //  * @param algo Algorithm to be recorded.
-  //  * @param n Number of elements to be processed.
-  //  */
-  // void simple_record_commands(const Algorithm *algo, const uint32_t n) const
-  // {
-  //   cmd_begin();
-  //   algo->record_bind_core(this->get_handle());
-  //   algo->record_bind_push(this->get_handle());
-  //   algo->record_dispatch_tmp(this->get_handle(), n);
-  //   cmd_end();
-  // }
-
   void record_commands_with_blocks(const Algorithm *algo,
                                    const uint32_t n_blocks) const {
     cmd_begin();
     algo->record_bind_core(this->get_handle());
     algo->record_bind_push(this->get_handle());
-    algo->record_dispatch_with_blocks(this->get_handle(), n_blocks);
+    Algorithm::record_dispatch_with_blocks(this->get_handle(), n_blocks);
     cmd_end();
   }
 
@@ -73,15 +50,10 @@ class Sequence final : public VulkanResource<VkCommandBuffer> {
   void create_command_pool();
   void create_command_buffer();
 
-  // ref
-  // VkDevice device_ = VK_NULL_HANDLE;
-
   VkQueue queue_ = VK_NULL_HANDLE;
-
   uint32_t compute_queue_index_ = 0;
 
   // owned
-  // VkCommandBuffer command_buffer_ = VK_NULL_HANDLE; // the handle
   VkCommandPool command_pool_ = VK_NULL_HANDLE;
   VkFence fence_ = VK_NULL_HANDLE;
 
