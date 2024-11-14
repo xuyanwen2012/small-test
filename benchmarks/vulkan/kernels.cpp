@@ -4,15 +4,6 @@
 #include "spdlog/common.h"
 #include "vulkan/engine.hpp"
 
-// class Vulkan_Kernels : public benchmark::Fixture {
-//  public:
-//   Vulkan_Kernels() {
-
-//   }
-
-//   Engine engine;
-// };
-
 static void RunMortonCode(benchmark::State& state) {
   //   const auto n_input = state.range(0);
   constexpr auto n_input = Config::DEFAULT_N;
@@ -50,10 +41,8 @@ static void RunMortonCode(benchmark::State& state) {
                                    u_points,
                                    u_morton,
                                },
-                               768,
-                               reinterpret_cast<const std::byte*>(&pc),
                                sizeof(pc));
-
+  algo->set_push_constants(pc);
   auto seq = engine.sequence();
 
   for (auto _ : state) {

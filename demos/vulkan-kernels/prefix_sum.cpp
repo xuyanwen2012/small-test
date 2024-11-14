@@ -42,9 +42,8 @@ int main() {
                                    output,
                                    block_sums,
                                },
-                               n_threads,
-                               reinterpret_cast<const std::byte*>(&pc),
                                sizeof(pc));
+  algo->set_push_constants(pc);
 
   auto seq = engine.sequence();
   seq->record_commands_with_blocks(algo.get(), n_blocks);
@@ -56,9 +55,8 @@ int main() {
                                     block_sums,
                                     output,
                                 },
-                                n_threads,
-                                reinterpret_cast<const std::byte*>(&pc),
                                 sizeof(pc));
+  algo2->set_push_constants(pc);
 
   auto seq2 = engine.sequence();
   seq2->record_commands_with_blocks(algo2.get(), n_blocks);

@@ -55,11 +55,8 @@ void VulkanInitKernelsParamTest::RunInitTestWithBlocks(int n_points,
   auto u_points = engine.buffer(n_points * sizeof(glm::vec4));
 
   auto algo =
-      engine.algorithm("init.spv",
-                       {u_points},
-                       512,
-                       reinterpret_cast<const std::byte*>(&init_push_constants),
-                       sizeof(init_push_constants));
+      engine.algorithm("init.spv", {u_points}, sizeof(init_push_constants));
+  algo->set_push_constants(init_push_constants);
 
   seq->record_commands_with_blocks(algo.get(), num_blocks);
   seq->launch_kernel_async();

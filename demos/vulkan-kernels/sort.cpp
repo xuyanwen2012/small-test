@@ -40,9 +40,8 @@ int main() {
   auto algorithm =
       engine.algorithm("digit_binning.spv",
                        {u_input_buf, u_output_buf, u_shared_bucket_buf},
-                       256,
-                       reinterpret_cast<const std::byte*>(&pc),
                        sizeof(pc));
+  algorithm->set_push_constants(pc);
 
   auto seq = engine.sequence();
   seq->record_commands_with_blocks(algorithm.get(), n_blocks);

@@ -25,7 +25,8 @@ class Engine final : public BaseEngine {
 
   // typed buffer
   template <typename T>
-  [[nodiscard]] auto typed_buffer(size_t count) -> std::shared_ptr<TypedBuffer<T>> {
+  [[nodiscard]] auto typed_buffer(size_t count)
+      -> std::shared_ptr<TypedBuffer<T>> {
     auto buf = std::make_shared<TypedBuffer<T>>(this->get_device_ptr(), count);
 
     if (manage_resources_) {
@@ -35,17 +36,32 @@ class Engine final : public BaseEngine {
     return buf;
   }
 
+  // [[nodiscard]] auto algorithm(
+  //     const std::string &spirv_filename,
+  //     const std::vector<std::shared_ptr<Buffer>> &buffers,
+  //     uint32_t threads_per_block,
+  //     const std::byte *push_constants_data,
+  //     const uint32_t push_constants_size) -> std::shared_ptr<Algorithm> {
+  //   auto algo = std::make_shared<Algorithm>(this->get_device_ptr(),
+  //                                           spirv_filename,
+  //                                           buffers,
+  //                                           threads_per_block,
+  //                                           push_constants_data,
+  //                                           push_constants_size);
+
+  //   if (manage_resources_) {
+  //     algorithms_.push_back(algo);
+  //   }
+  //   return algo;
+  // }
+
   [[nodiscard]] auto algorithm(
       const std::string &spirv_filename,
       const std::vector<std::shared_ptr<Buffer>> &buffers,
-      uint32_t threads_per_block,
-      const std::byte *push_constants_data,
       const uint32_t push_constants_size) -> std::shared_ptr<Algorithm> {
     auto algo = std::make_shared<Algorithm>(this->get_device_ptr(),
                                             spirv_filename,
                                             buffers,
-                                            threads_per_block,
-                                            push_constants_data,
                                             push_constants_size);
 
     if (manage_resources_) {

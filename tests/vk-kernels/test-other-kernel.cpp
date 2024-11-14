@@ -57,9 +57,8 @@ void VulkanMortonKernelTest::RunMortonTestWithBlocks(int n_points,
                                    u_points,
                                    u_morton_keys,
                                },
-                               768,
-                               reinterpret_cast<const std::byte*>(&pc),
                                sizeof(pc));
+  algo->set_push_constants(pc);
 
   auto seq = engine.sequence();
   seq->record_commands_with_blocks(algo.get(), num_blocks);
