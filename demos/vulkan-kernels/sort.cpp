@@ -68,9 +68,9 @@ int main() {
 
   // print out the
 
-  for (int i = 0; i < n_input; i++) {
-    spdlog::info("{}", u_input_buf->at(i));
-  }
+  // for (int i = 0; i < n_input; i++) {
+  //   spdlog::info("{}", u_input_buf->at(i));
+  // }
 
   bool is_sorted = std::is_sorted(u_input_buf->begin(), u_input_buf->end());
   spdlog::info("is_sorted: {}", is_sorted);
