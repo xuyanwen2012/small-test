@@ -17,14 +17,14 @@ void Algorithm::destroy() {
 }
 
 void Algorithm::create_descriptor_pool() {
-  std::vector<VkDescriptorPoolSize> pool_sizes{
+  const std::vector<VkDescriptorPoolSize> pool_sizes = {
       {
           .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
           .descriptorCount = static_cast<uint32_t>(usm_buffers_.size()),
       },
   };
 
-  VkDescriptorPoolCreateInfo pool_info = {
+  const VkDescriptorPoolCreateInfo pool_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
       .maxSets = 1,
       .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
@@ -36,21 +36,19 @@ void Algorithm::create_descriptor_pool() {
 }
 
 void Algorithm::create_descriptor_set_layout() {
-  // for each buffer, need a binding
   std::vector<VkDescriptorSetLayoutBinding> bindings;
   bindings.reserve(usm_buffers_.size());
 
   for (size_t i = 0; i < usm_buffers_.size(); ++i) {
     bindings.emplace_back(VkDescriptorSetLayoutBinding{
-        .binding = static_cast<uint32_t>(i),  // binding number need to match
-                                              // the shader
+        .binding = static_cast<uint32_t>(i),
         .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
         .descriptorCount = 1,
         .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
     });
   }
 
-  VkDescriptorSetLayoutCreateInfo layout_create_info = {
+  const VkDescriptorSetLayoutCreateInfo layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
       .bindingCount = static_cast<uint32_t>(bindings.size()),
       .pBindings = bindings.data(),
@@ -61,7 +59,7 @@ void Algorithm::create_descriptor_set_layout() {
 }
 
 void Algorithm::allocate_descriptor_sets() {
-  VkDescriptorSetAllocateInfo set_allocate_info = {
+  const VkDescriptorSetAllocateInfo set_allocate_info = {
       .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
       .descriptorPool = descriptor_pool_,
       .descriptorSetCount = 1,
@@ -73,48 +71,41 @@ void Algorithm::allocate_descriptor_sets() {
 }
 
 void Algorithm::create_pipeline() {
-  // Push constant Range (1.5/3)
-  const auto push_constant_range = VkPushConstantRange{
+  const VkPushConstantRange push_constant_range = {
       .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
       .offset = 0,
       .size = push_constants_size_,
   };
 
-  // Pipeline layout (2/3)
-  VkPipelineLayoutCreateInfo layout_create_info = {
+  const VkPipelineLayoutCreateInfo layout_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
       .setLayoutCount = 1,
       .pSetLayouts = &descriptor_set_layout_,
-      .pushConstantRangeCount = 1,
+      .pushConstantRangeCount =
+          static_cast<uint32_t>(has_push_constants() ? 1 : 0),
       .pPushConstantRanges = &push_constant_range,
   };
 
   check_vk_result(vkCreatePipelineLayout(
       *device_ptr_, &layout_create_info, nullptr, &pipeline_layout_));
 
-  // Pipeline cache (2.5/3)
-  constexpr auto pipeline_cache_info = VkPipelineCacheCreateInfo{
+  constexpr VkPipelineCacheCreateInfo pipeline_cache_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
   };
 
   check_vk_result(vkCreatePipelineCache(
       *device_ptr_, &pipeline_cache_info, nullptr, &pipeline_cache_));
 
-  // Specialization info (2.75/3) telling the shader the workgroup size
-
-  spdlog::debug("Algorithm::create_pipeline, is not CLSPV shader");
-
   constexpr auto p_name = "main";
 
-  // Pipeline itself (3/3)
-  VkPipelineShaderStageCreateInfo shader_stage_create_info = {
+  const VkPipelineShaderStageCreateInfo shader_stage_create_info = {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
       .stage = VK_SHADER_STAGE_COMPUTE_BIT,
       .module = this->get_handle(),
       .pName = p_name,
   };
 
-  VkComputePipelineCreateInfo pipeline_create_info = {
+  const VkComputePipelineCreateInfo pipeline_create_info = {
       .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
       .stage = shader_stage_create_info,
       .layout = pipeline_layout_,
@@ -139,7 +130,7 @@ void Algorithm::create_pipeline() {
 void Algorithm::create_shader_module() {
   const auto spirv_binary = load_shader_from_file(spirv_filename_);
 
-  const VkShaderModuleCreateInfo create_info{
+  const VkShaderModuleCreateInfo create_info = {
       .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
       .codeSize = spirv_binary.size() * sizeof(uint32_t),
       .pCode = reinterpret_cast<const uint32_t *>(spirv_binary.data()),
@@ -170,6 +161,10 @@ void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
 void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
   spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
                 push_constants_size_);
+
+  if (push_constants_size_ == 0) {
+    return;
+  }
 
   vkCmdPushConstants(cmd_buf,
                      pipeline_layout_,

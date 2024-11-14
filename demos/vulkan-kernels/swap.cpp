@@ -53,5 +53,17 @@ int main() {
         "[{}] {} {}", i, debug_output1_buf->at(i), debug_output2_buf->at(i));
   }
 
+  algo->update_descriptor_sets_with_buffers(
+      {u_input_buf, u_output_buf, debug_output1_buf, debug_output2_buf});
+  seq->record_commands_with_blocks(algo.get(), 1);
+  seq->launch_kernel_async();
+  seq->sync();
+
+  // print out the debug buffers
+  for (int i = 0; i < n_input; i++) {
+    spdlog::info(
+        "[{}] {} {}", i, debug_output1_buf->at(i), debug_output2_buf->at(i));
+  }
+
   return 0;
 }

@@ -37,7 +37,8 @@ class Sequence final : public VulkanResource<VkCommandBuffer> {
   //  * @param algo Algorithm to be recorded.
   //  * @param n Number of elements to be processed.
   //  */
-  // void simple_record_commands(const Algorithm *algo, const uint32_t n) const {
+  // void simple_record_commands(const Algorithm *algo, const uint32_t n) const
+  // {
   //   cmd_begin();
   //   algo->record_bind_core(this->get_handle());
   //   algo->record_bind_push(this->get_handle());
