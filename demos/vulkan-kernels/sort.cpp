@@ -11,13 +11,17 @@ struct PushConstants {
   uint32_t num_pairs;
 };
 
-int main() {
-  spdlog::set_level(spdlog::level::debug);
+int main(int argc, char** argv) {
+  int n_physical_blocks = 1;
+  if (argc > 1) {
+    n_physical_blocks = std::atoi(argv[1]);
+  }
+
+  spdlog::set_level(spdlog::level::info);
 
   Engine engine;
 
-  constexpr auto n_input = 1024;
-  constexpr auto n_threads = 256;  // defined in the shader
+  constexpr auto n_input = 640 * 480;
 
   // ---------------------------------------------------------------------------
   // Prepare the buffers
@@ -57,7 +61,7 @@ int main() {
     // should already be swapped by the previous iteration
     algorithm->update_descriptor_sets_with_buffers({u_input_buf, u_output_buf});
 
-    seq->record_commands_with_blocks(algorithm.get(), 1);
+    seq->record_commands_with_blocks(algorithm.get(), n_physical_blocks);
     seq->launch_kernel_async();
     seq->sync();
 
@@ -66,18 +70,14 @@ int main() {
 
   // ---------------------------------------------------------------------------
 
-  // print out the
-
-  // for (int i = 0; i < n_input; i++) {
-  //   spdlog::info("{}", u_input_buf->at(i));
-  // }
-
   bool is_sorted = std::is_sorted(u_input_buf->begin(), u_input_buf->end());
   spdlog::info("is_sorted: {}", is_sorted);
 
   bool is_sorted_alt =
       std::is_sorted(u_output_buf->begin(), u_output_buf->end());
   spdlog::info("is_sorted_alt: {}", is_sorted_alt);
+
+  assert(is_sorted != is_sorted_alt);
 
   return 0;
 }
