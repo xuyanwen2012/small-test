@@ -18,8 +18,8 @@ class Algorithm final : public VulkanResource<VkShaderModule> {
       : VulkanResource<VkShaderModule>(std::move(device_ptr)),
         spirv_filename_(spirv_filename),
         usm_buffers_(buffers),
-        push_constants_size_(push_constants_size),
-        push_constants_data_(push_constants_size) {
+        push_constants_data_(push_constants_size),
+        push_constants_size_(push_constants_size) {
     spdlog::debug(
         "Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
         spirv_filename_,
