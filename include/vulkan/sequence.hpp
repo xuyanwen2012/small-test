@@ -30,20 +30,20 @@ class Sequence final : public VulkanResource<VkCommandBuffer> {
   void cmd_begin() const;
   void cmd_end() const;
 
-  /**
-   * @brief Record the commands of an Algorithm. It will bind pipeline, push
-   * constants, and dispatch.
-   *
-   * @param algo Algorithm to be recorded.
-   * @param n Number of elements to be processed.
-   */
-  void simple_record_commands(const Algorithm *algo, const uint32_t n) const {
-    cmd_begin();
-    algo->record_bind_core(this->get_handle());
-    algo->record_bind_push(this->get_handle());
-    algo->record_dispatch_tmp(this->get_handle(), n);
-    cmd_end();
-  }
+  // /**
+  //  * @brief Record the commands of an Algorithm. It will bind pipeline, push
+  //  * constants, and dispatch.
+  //  *
+  //  * @param algo Algorithm to be recorded.
+  //  * @param n Number of elements to be processed.
+  //  */
+  // void simple_record_commands(const Algorithm *algo, const uint32_t n) const {
+  //   cmd_begin();
+  //   algo->record_bind_core(this->get_handle());
+  //   algo->record_bind_push(this->get_handle());
+  //   algo->record_dispatch_tmp(this->get_handle(), n);
+  //   cmd_end();
+  // }
 
   void record_commands_with_blocks(const Algorithm *algo,
                                    const uint32_t n_blocks) const {

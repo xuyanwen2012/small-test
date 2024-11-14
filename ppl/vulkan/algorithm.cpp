@@ -5,72 +5,93 @@
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
+// ---------------------------------------------------------------------------
+// Destruction
+// ---------------------------------------------------------------------------
+
 void Algorithm::destroy() {
   spdlog::debug("Algorithm::destroy()");
 
   vkDestroyShaderModule(*device_ptr_, handle_, nullptr);
+
   vkDestroyPipeline(*device_ptr_, pipeline_, nullptr);
   vkDestroyPipelineCache(*device_ptr_, pipeline_cache_, nullptr);
   vkDestroyPipelineLayout(*device_ptr_, pipeline_layout_, nullptr);
   vkDestroyDescriptorSetLayout(*device_ptr_, descriptor_set_layout_, nullptr);
   vkDestroyDescriptorPool(*device_ptr_, descriptor_pool_, nullptr);
 
-  if (heterogeneous_push_constants_data_) {
-    delete[] heterogeneous_push_constants_data_;
-  }
+  spvReflectDestroyShaderModule(&reflect_module_);
 }
 
-void Algorithm::set_push_constants(const std::byte *push_constants_data,
-                                   const uint32_t push_constants_size) {
-  spdlog::debug(
-      "Setting heterogeneous push constants at address: {:#x} with size: {}",
-      reinterpret_cast<std::uintptr_t>(push_constants_data),
-      push_constants_size);
+// ---------------------------------------------------------------------------
+// Shader module
+// ---------------------------------------------------------------------------
 
-  // delete the previous data if it exists
-  if (heterogeneous_push_constants_data_) {
-    delete[] heterogeneous_push_constants_data_;
+void Algorithm::create_shader_module() {
+  const auto spirv_binary = load_shader_from_file(spirv_filename_);
+
+  // Reflect the shader module before anything else
+  if (spvReflectCreateShaderModule(spirv_binary.size() * sizeof(uint32_t),
+                                   spirv_binary.data(),
+                                   &reflect_module_) !=
+      SPV_REFLECT_RESULT_SUCCESS) {
+    spdlog::error("Failed to reflect shader module");
+    return;
   }
 
-  heterogeneous_push_constants_size_ = push_constants_size;
-  heterogeneous_push_constants_data_ = new std::byte[push_constants_size];
-  std::memcpy(heterogeneous_push_constants_data_,
-              push_constants_data,
-              push_constants_size);
-}
-
-void Algorithm::create_descriptor_pool() {
-  std::vector<VkDescriptorPoolSize> pool_sizes{
-      {
-          .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-          .descriptorCount = static_cast<uint32_t>(usm_buffers_.size()),
-      },
+  // We can create the shader module now, it does not need the reflection data
+  const VkShaderModuleCreateInfo create_info{
+      .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+      .codeSize = spirv_binary.size() * sizeof(uint32_t),
+      .pCode = reinterpret_cast<const uint32_t *>(spirv_binary.data()),
   };
 
-  VkDescriptorPoolCreateInfo pool_info = {
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-      .maxSets = 1,
-      .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
-      .pPoolSizes = pool_sizes.data(),
-  };
+  check_vk_result(vkCreateShaderModule(
+      *device_ptr_, &create_info, nullptr, &this->get_handle()));
 
-  check_vk_result(vkCreateDescriptorPool(
-      *device_ptr_, &pool_info, nullptr, &descriptor_pool_));
+  spdlog::debug("Shader module created successfully");
 }
+
+// ---------------------------------------------------------------------------
+// Descriptor set layout
+// ---------------------------------------------------------------------------
 
 void Algorithm::create_descriptor_set_layout() {
-  // for each buffer, need a binding
-  std::vector<VkDescriptorSetLayoutBinding> bindings;
-  bindings.reserve(usm_buffers_.size());
 
-  for (size_t i = 0; i < usm_buffers_.size(); ++i) {
-    bindings.emplace_back(VkDescriptorSetLayoutBinding{
-        .binding = static_cast<uint32_t>(i),  // binding number need to match
-                                              // the shader
-        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-    });
+  // Query descriptor set count and layouts
+  uint32_t descriptor_set_count = 0;
+  if (spvReflectEnumerateDescriptorSets(
+          &reflect_module_, &descriptor_set_count, nullptr) !=
+      SPV_REFLECT_RESULT_SUCCESS) {
+    spdlog::error("Failed to enumerate descriptor sets.");
+    return;
+  }
+
+  // for my application, I only have one descriptor set
+  assert(descriptor_set_count == 1);
+
+  // Query descriptor set layouts
+  std::vector<SpvReflectDescriptorSet *> descriptor_sets(descriptor_set_count);
+  spvReflectEnumerateDescriptorSets(
+      &reflect_module_, &descriptor_set_count, descriptor_sets.data());
+
+  std::vector<VkDescriptorSetLayoutBinding> bindings;
+  bindings.reserve(descriptor_sets[0]->binding_count);
+
+  for (uint32_t i = 0; i < descriptor_set_count; ++i) {
+    const auto& set = descriptor_sets[i];
+
+    for (uint32_t j = 0; j < set->binding_count; ++j) {
+      const auto& binding = set->bindings[j];
+      
+      bindings.push_back(VkDescriptorSetLayoutBinding{
+          .binding = binding->binding,
+          .descriptorType = static_cast<VkDescriptorType>(binding->descriptor_type),
+          .descriptorCount = 1, // Or binding->count if it's an array
+          .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+          .pImmutableSamplers = nullptr
+      });
+    }
   }
 
   VkDescriptorSetLayoutCreateInfo layout_create_info = {
@@ -83,71 +104,148 @@ void Algorithm::create_descriptor_set_layout() {
       *device_ptr_, &layout_create_info, nullptr, &descriptor_set_layout_));
 }
 
-void Algorithm::allocate_descriptor_sets() {
-  VkDescriptorSetAllocateInfo set_allocate_info = {
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-      .descriptorPool = descriptor_pool_,
-      .descriptorSetCount = 1,
-      .pSetLayouts = &descriptor_set_layout_,
-  };
+// ---------------------------------------------------------------------------
+// Descriptor pool
+// ---------------------------------------------------------------------------
 
-  check_vk_result(vkAllocateDescriptorSets(
-      *device_ptr_, &set_allocate_info, &descriptor_set_));
+void Algorithm::create_descriptor_pool() {
+    // Query descriptor set count and layouts (we already know it's 1 from earlier assert)
+    std::vector<SpvReflectDescriptorSet*> descriptor_sets(1);
+    uint32_t descriptor_set_count = 1;
+    spvReflectEnumerateDescriptorSets(&reflect_module_, &descriptor_set_count, descriptor_sets.data());
+    
+    const auto& set = descriptor_sets[0];
+    
+    // Count how many descriptors of each type we need
+    std::unordered_map<VkDescriptorType, uint32_t> type_counts;
+    for (uint32_t i = 0; i < set->binding_count; i++) {
+        const auto& binding = set->bindings[i];
+        VkDescriptorType type = static_cast<VkDescriptorType>(binding->descriptor_type);
+        type_counts[type] += binding->count; // binding->count handles arrays
+    }
+    
+    // Create pool sizes array from the counts
+    std::vector<VkDescriptorPoolSize> pool_sizes;
+    pool_sizes.reserve(type_counts.size());
+    for (const auto& [type, count] : type_counts) {
+        pool_sizes.push_back(VkDescriptorPoolSize{
+            .type = type,
+            .descriptorCount = count
+        });
+    }
+
+    VkDescriptorPoolCreateInfo pool_info = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .maxSets = 1,  // We only need one descriptor set
+        .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
+        .pPoolSizes = pool_sizes.data(),
+    };
+
+    check_vk_result(vkCreateDescriptorPool(
+        *device_ptr_, &pool_info, nullptr, &descriptor_pool_));
+}
+
+void Algorithm::allocate_descriptor_sets() {
+    VkDescriptorSetAllocateInfo set_allocate_info = {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptor_pool_,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &descriptor_set_layout_,
+    };
+
+    check_vk_result(vkAllocateDescriptorSets(
+        *device_ptr_, &set_allocate_info, &descriptor_set_));
 }
 
 void Algorithm::update_descriptor_sets() {
-  std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets;
-  compute_write_descriptor_sets.reserve(usm_buffers_.size());
-  std::vector<VkDescriptorBufferInfo> buffer_infos(usm_buffers_.size());
+    // Get descriptor set information from reflection
+    std::vector<SpvReflectDescriptorSet*> descriptor_sets(1);
+    uint32_t descriptor_set_count = 1;
+    spvReflectEnumerateDescriptorSets(&reflect_module_, &descriptor_set_count, descriptor_sets.data());
+    
+    const auto& set = descriptor_sets[0];
+    
+    // Prepare descriptor writes
+    std::vector<VkWriteDescriptorSet> descriptor_writes;
+    std::vector<VkDescriptorBufferInfo> buffer_infos;
+    
+    descriptor_writes.reserve(set->binding_count);
+    buffer_infos.reserve(set->binding_count);
 
-  for (auto i = 0u; i < usm_buffers_.size(); ++i) {
-    buffer_infos[i] = usm_buffers_[i]->construct_descriptor_buffer_info();
-    compute_write_descriptor_sets.emplace_back(VkWriteDescriptorSet{
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptor_set_,
-        .dstBinding = static_cast<uint32_t>(i),
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        .pBufferInfo = &buffer_infos[i],
-    });
-  }
+    for (uint32_t i = 0; i < set->binding_count; i++) {
+        const auto& binding = set->bindings[i];
+        
+        // Skip if not a storage buffer
+        if (binding->descriptor_type != SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER) {
+            spdlog::warn("Skipping non-storage buffer binding {}", binding->binding);
+            continue;
+        }
 
-  vkUpdateDescriptorSets(
-      *device_ptr_,
-      static_cast<uint32_t>(compute_write_descriptor_sets.size()),
-      compute_write_descriptor_sets.data(),
-      0,
-      nullptr);
+        // Get the buffer for this binding
+        auto it = storage_buffers_.find(binding->binding);
+        if (it == storage_buffers_.end()) {
+            spdlog::warn("No buffer registered for binding {}", binding->binding);
+            continue;
+        }
+
+        buffer_infos.push_back(it->second->construct_descriptor_buffer_info());
+        
+        descriptor_writes.push_back(VkWriteDescriptorSet{
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptor_set_,
+            .dstBinding = binding->binding,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .pBufferInfo = &buffer_infos.back()
+        });
+    }
+
+    if (!descriptor_writes.empty()) {
+        vkUpdateDescriptorSets(
+            *device_ptr_,
+            static_cast<uint32_t>(descriptor_writes.size()),
+            descriptor_writes.data(),
+            0,
+            nullptr);
+    }
 }
 
-// [[deprecated("Use set_heterogeneous_push_constants instead")]] void
-// Algorithm::set_push_constants(const void *data,
-//                               const uint32_t size,
-//                               const uint32_t type_memory_size) {
-//   // spdlog::debug("Setting push constants with size: {} and type memory
-//   size:
-//   // {}",
-//   //               size,
-//   //               type_memory_size);
-
-//   // const uint32_t total_size = size * type_memory_size;
-
-//   // push_constants_data_ = malloc(total_size);
-//   // std::memcpy(push_constants_data_, data, total_size);
-
-//   // push_constants_size_ = size;
-//   // push_constants_data_type_memory_size_ = type_memory_size;
-//   throw std::runtime_error("Not implemented");
-// }
-
 void Algorithm::create_pipeline() {
+  // reflect
+  uint32_t push_constant_count = 0;
+  if (spvReflectEnumeratePushConstantBlocks(
+          &reflect_module_, &push_constant_count, nullptr) !=
+      SPV_REFLECT_RESULT_SUCCESS) {
+    spdlog::error("spvReflect:Failed to enumerate push constant blocks.");
+    return;
+  }
+
+  assert(push_constant_count == push_constants_count_);
+
+  std::vector<SpvReflectBlockVariable *> push_constants(push_constant_count);
+  if (push_constant_count > 0) {
+    spdlog::info("Push constant count: {}", push_constant_count);
+    if (spvReflectEnumeratePushConstantBlocks(
+            &reflect_module_, &push_constant_count, push_constants.data()) !=
+        SPV_REFLECT_RESULT_SUCCESS) {
+      spdlog::error("spvReflect:Failed to get push constant blocks.");
+      return;
+    }
+  }
+
+  auto push_constants_size = push_constants[0]->size;
+  push_constants_size_ = push_constants_size;
+  spdlog::info("Reflected: Push constants size: {}", push_constants_size);
+
+  // ---------------------------------------------------------------------------
   // Push constant Range (1.5/3)
+  // TODO: these should match the reflected result
+
   const auto push_constant_range = VkPushConstantRange{
       .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
       .offset = 0,
-      // .size = push_constants_data_type_memory_size_ * push_constants_size_,
-      .size = heterogeneous_push_constants_size_,
+      .size = push_constants_size,
   };
 
   // Pipeline layout (2/3)
@@ -171,10 +269,8 @@ void Algorithm::create_pipeline() {
       *device_ptr_, &pipeline_cache_info, nullptr, &pipeline_cache_));
 
   // Specialization info (2.75/3) telling the shader the workgroup size
-
-  spdlog::debug("Algorithm::create_pipeline, is not CLSPV shader");
-
-  constexpr auto p_name = "main";
+  // constexpr auto p_name = "main";
+  const auto p_name = reflect_module_.entry_point_name;
 
   // Pipeline itself (3/3)
   VkPipelineShaderStageCreateInfo shader_stage_create_info = {
@@ -206,86 +302,78 @@ void Algorithm::create_pipeline() {
   spdlog::debug("Pipeline created successfully");
 }
 
-void Algorithm::create_shader_module() {
-  const auto spirv_binary = load_shader_from_file(spirv_filename_);
+// // this method send the buffer data to the shader
+// void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
+//   spdlog::debug("Algorithm::record_bind_core()");
 
-  const VkShaderModuleCreateInfo create_info{
-      .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-      .codeSize = spirv_binary.size() * sizeof(uint32_t),
-      .pCode = reinterpret_cast<const uint32_t *>(spirv_binary.data()),
-  };
-
-  check_vk_result(vkCreateShaderModule(
-      *device_ptr_, &create_info, nullptr, &this->get_handle()));
-
-  spdlog::debug("Shader module created successfully");
-}
-
-// this method send the buffer data to the shader
-void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
-  spdlog::debug("Algorithm::record_bind_core()");
-
-  vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_);
-  vkCmdBindDescriptorSets(cmd_buf,
-                          VK_PIPELINE_BIND_POINT_COMPUTE,
-                          pipeline_layout_,
-                          0,
-                          1,
-                          &descriptor_set_,
-                          0,
-                          nullptr);
-}
+//   vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_);
+//   vkCmdBindDescriptorSets(cmd_buf,
+//                           VK_PIPELINE_BIND_POINT_COMPUTE,
+//                           pipeline_layout_,
+//                           0,
+//                           1,
+//                           &descriptor_set_,
+//                           0,
+//                           nullptr);
+// }
 
 // // this method send the push constants to the shader
 // void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
 //   spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
-//                 push_constants_size_ *
-//                 push_constants_data_type_memory_size_);
+//                 heterogeneous_push_constants_size_);
 
-//   vkCmdPushConstants(
-//       cmd_buf,
-//       pipeline_layout_,
-//       VK_SHADER_STAGE_COMPUTE_BIT,
-//       0,
-//       push_constants_size_ * push_constants_data_type_memory_size_,
-//       push_constants_data_);
+//   vkCmdPushConstants(cmd_buf,
+//                      pipeline_layout_,
+//                      VK_SHADER_STAGE_COMPUTE_BIT,
+//                      0,
+//                      heterogeneous_push_constants_size_,
+//                      heterogeneous_push_constants_data_);
 // }
 
-// this method send the push constants to the shader
-void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
-  spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
-                heterogeneous_push_constants_size_);
+// // this method dispatch the kernel with the number of blocks provided.
+// void Algorithm::record_dispatch_with_blocks(VkCommandBuffer cmd_buf,
+//                                             uint32_t n_blocks) const {
+//   spdlog::debug("Algorithm::record_dispatch_with_blocks, n_blocks: {}",
+//                 n_blocks);
 
-  vkCmdPushConstants(cmd_buf,
-                     pipeline_layout_,
-                     VK_SHADER_STAGE_COMPUTE_BIT,
-                     0,
-                     heterogeneous_push_constants_size_,
-                     heterogeneous_push_constants_data_);
-}
+//   vkCmdDispatch(cmd_buf, n_blocks, 1u, 1u);
+// }
 
-// this method dispatch the kernel with the number of blocks based on the input
-// size. It will use as much blocks as needed to cover the input size.
-void Algorithm::record_dispatch_tmp(VkCommandBuffer cmd_buf, uint32_t n) const {
-  const auto num_blocks = (n + threads_per_block_ - 1u) / threads_per_block_;
+// void Algorithm::record_bind_core(VkCommandBuffer cmd_buf) const {
+//   spdlog::debug("Algorithm::record_bind_core()");
 
-  spdlog::debug(
-      "Algorithm::record_dispatch_tmp, trying to CmdDispatch with input size, "
-      "n: {}, threads_per_block: {}, num_blocks: ({}, {}, {})",
-      n,
-      threads_per_block_,
-      num_blocks,
-      1u,
-      1u);
+//   vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_);
+//   vkCmdBindDescriptorSets(cmd_buf,
+//                          VK_PIPELINE_BIND_POINT_COMPUTE,
+//                          pipeline_layout_,
+//                          0,
+//                          1,
+//                          &descriptor_set_,
+//                          0,
+//                          nullptr);
+// }
 
-  vkCmdDispatch(cmd_buf, num_blocks, 1u, 1u);
-}
+// void Algorithm::record_bind_push(VkCommandBuffer cmd_buf) const {
+//   if (heterogeneous_push_constants_size_ > 0 && heterogeneous_push_constants_data_ != nullptr) {
+//     spdlog::debug("Algorithm::record_bind_push, constants memory size: {}",
+//                   heterogeneous_push_constants_size_);
 
-// this method dispatch the kernel with the number of blocks provided.
-void Algorithm::record_dispatch_with_blocks(VkCommandBuffer cmd_buf,
-                                            uint32_t n_blocks) const {
-  spdlog::debug("Algorithm::record_dispatch_with_blocks, n_blocks: {}",
-                n_blocks);
+//     vkCmdPushConstants(cmd_buf,
+//                       pipeline_layout_,
+//                       VK_SHADER_STAGE_COMPUTE_BIT,
+//                       0,
+//                       heterogeneous_push_constants_size_,
+//                       heterogeneous_push_constants_data_);
+//   }
+// }
 
-  vkCmdDispatch(cmd_buf, n_blocks, 1u, 1u);
-}
+// void Algorithm::record_dispatch_with_blocks(VkCommandBuffer cmd_buf,
+//                                           uint32_t n_blocks) const {
+//   spdlog::debug("Algorithm::record_dispatch_with_blocks, n_blocks: {}", n_blocks);
+//   vkCmdDispatch(cmd_buf, n_blocks, 1u, 1u);
+// }
+
+// void Algorithm::set_push_constants(const void* data, uint32_t size) {
+//   heterogeneous_push_constants_data_ = data;
+//   heterogeneous_push_constants_size_ = size;
+// }
