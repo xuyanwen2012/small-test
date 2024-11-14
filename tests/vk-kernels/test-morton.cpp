@@ -1,8 +1,5 @@
-#include <glm/glm.hpp>
 #include <random>
 
-#include "common.hpp"
-#include "gtest/gtest.h"
 #include "test-base.hpp"
 
 class VulkanMortonKernelTest

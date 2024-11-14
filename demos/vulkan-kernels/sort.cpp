@@ -1,10 +1,8 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <random>
 
 #include "vulkan/engine.hpp"
-#include "vulkan/typed_buffer.hpp"
 
 struct PushConstants {
   uint32_t n_logical_blocks;
@@ -12,62 +10,6 @@ struct PushConstants {
   uint32_t width;
   uint32_t num_pairs;
 };
-
-// void gpu_merge_sort(Algorithm *algo,
-//                     Sequence *seq,
-//                     int n_physical_blocks,
-//                     // uint32_t *data,
-//                     // uint32_t *temp,
-//                     // TypedBuffer<uint32_t> *u_input_buf,
-//                     // TypedBuffer<uint32_t> *u_output_buf,
-//                     std::shared_ptr<Buffer> u_input_buf,
-//                     std::shared_ptr<Buffer> u_output_buf,
-//                     int n) {
-//   // uint32_t *input = data;
-//   // uint32_t *output = temp;
-
-//   constexpr auto threads_per_block = 256;
-
-//   bool flip = false;
-
-//   for (int width = 1; width < n; width *= 2) {
-//     int num_pairs = (n + 2 * width - 1) / (2 * width);
-//     int total_threads = num_pairs;
-//     int logical_blocks =
-//         (total_threads + threads_per_block - 1) / threads_per_block;
-
-//     PushConstants pc = {uint32_t(logical_blocks),
-//                         uint32_t(n),
-//                         uint32_t(width),
-//                         uint32_t(num_pairs)};
-//     algo->set_push_constants(pc);
-
-//     if (flip) {
-//       algo->update_descriptor_sets_with_buffers({u_output_buf, u_input_buf});
-//     } else {
-//       algo->update_descriptor_sets_with_buffers({u_input_buf, u_output_buf});
-//     }
-
-//     seq->record_commands_with_blocks(algo, n_physical_blocks);
-//     seq->launch_kernel_async();
-//     seq->sync();
-
-//     // merge_kernel<<<n_desired_blocks, threads_per_block>>>(
-//     //     blocks, input, output, n, width, num_pairs);
-//     // cudaDeviceSynchronize();
-
-//     // // Swap input and output pointers for next iteration
-//     // uint32_t *temp_ptr = input;
-//     // input = output;
-//     // output = temp_ptr;
-//   }
-
-//   // // If the final output is in the temp array, copy it back to data
-//   // if (input != data) {
-//   //   cudaMemcpy(data, input, n * sizeof(uint32_t),
-//   cudaMemcpyDeviceToDevice);
-//   // }
-// }
 
 int main() {
   spdlog::set_level(spdlog::level::debug);
@@ -112,6 +54,7 @@ int main() {
 
     spdlog::info("blocks: {}", logical_blocks);
 
+    // should already be swapped by the previous iteration
     algorithm->update_descriptor_sets_with_buffers({u_input_buf, u_output_buf});
 
     seq->record_commands_with_blocks(algorithm.get(), 1);

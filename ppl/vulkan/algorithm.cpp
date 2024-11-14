@@ -213,6 +213,7 @@ void Algorithm::update_descriptor_sets() {
 // this method update the descriptor sets with the buffers provided.
 void Algorithm::update_descriptor_sets_with_buffers(
     const std::vector<std::shared_ptr<Buffer>> &buffers) {
+      
   std::vector<VkWriteDescriptorSet> compute_write_descriptor_sets;
   compute_write_descriptor_sets.reserve(buffers.size());
   std::vector<VkDescriptorBufferInfo> buffer_infos(buffers.size());
