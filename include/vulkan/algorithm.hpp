@@ -50,6 +50,10 @@ class Algorithm final : public VulkanResource<VkShaderModule> {
     std::memcpy(push_constants_data_.data(), &push_const_struct, sizeof(T));
   }
 
+  void update_descriptor_sets_with_buffers(
+      const std::vector<std::shared_ptr<Buffer>>& buffers);
+  void update_descriptor_sets();
+
   // this method send the pipeline and descriptor set to the shader (basically
   // send the data in buffer to shader)
   void record_bind_core(VkCommandBuffer cmd_buf) const;
@@ -69,7 +73,6 @@ class Algorithm final : public VulkanResource<VkShaderModule> {
   void create_descriptor_set_layout();
   void create_descriptor_pool();
   void allocate_descriptor_sets();
-  void update_descriptor_sets();
 
   // Vulkan components
   VkPipeline pipeline_ = VK_NULL_HANDLE;

@@ -29,6 +29,7 @@ int main() {
       0);
   auto seq = engine.sequence();
 
+  //   algo->update_descriptor_sets_with_buffers({u_input_buf, u_output_buf});
   seq->record_commands_with_blocks(algo.get(), 1);
   seq->launch_kernel_async();
   seq->sync();
@@ -39,13 +40,8 @@ int main() {
         "[{}] {} {}", i, debug_output1_buf->at(i), debug_output2_buf->at(i));
   }
 
-//   auto algo2 = engine.algorithm(
-//       "print-128.spv",
-//       {u_output_buf, u_input_buf, debug_output1_buf, debug_output2_buf},
-//       0);
-//   auto seq2 = engine.sequence();
-
-//   std::swap(u_input_buf, u_output_buf);
+  algo->update_descriptor_sets_with_buffers(
+      {u_output_buf, u_input_buf, debug_output1_buf, debug_output2_buf});
 
   seq->record_commands_with_blocks(algo.get(), 1);
   seq->launch_kernel_async();
