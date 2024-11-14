@@ -82,4 +82,12 @@ target("demo-vulkan-kernel-sort")
     after_build(compile_shaders)
 target_end()
 
+target("demo-vulkan-kernel-swap")
+    set_kind("binary")
+    add_files("vulkan-kernels/swap.cpp")
+    add_includedirs("$(projectdir)/include")
+    add_deps("ppl-vulkan")
+    add_packages("glm", "spdlog", "volk", "vulkan-memory-allocator")
+    if is_plat("android") then on_run(run_on_android) end
+target_end()
 

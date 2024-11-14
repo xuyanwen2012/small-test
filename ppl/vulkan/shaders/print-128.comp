@@ -1,0 +1,17 @@
+#version 450
+
+layout(std430, binding = 0) buffer InputBuffer { uint u_input[]; };
+layout(std430, binding = 1) buffer OutputBuffer { uint u_output[]; };
+layout(std430, binding = 2) buffer DebugBuffer1 { uint debug_output1[]; };
+layout(std430, binding = 3) buffer DebugBuffer2 { uint debug_output2[]; };
+
+layout(local_size_x = 128) in;
+
+void main() {
+  uint idx = gl_GlobalInvocationID.x;
+
+  if (idx < 128) {
+    debug_output1[idx] = u_input[idx];
+    debug_output2[idx] = u_output[idx];
+  }
+}

@@ -68,20 +68,5 @@ void main() {
 
   barrier();
 
-  // Scatter elements to their final positions
-  if (tid < pc.n) {
-    uint value = u_in_data[tid];
-    uint digit = getDigit(value, pc.shift);
 
-    // Get position in global output array
-    uint global_offset = 0;
-    for (uint i = 0; i < wgid; i++) {
-      global_offset += u_local_histogram[digit];
-    }
-
-    uint local_pos = atomicAdd(u_local_offsets[digit], 1);
-    uint final_pos = global_offset + local_pos;
-
-    u_out_data[final_pos] = value;
-  }
 }

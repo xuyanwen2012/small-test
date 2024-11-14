@@ -16,25 +16,6 @@ void Algorithm::destroy() {
   vkDestroyDescriptorPool(*device_ptr_, descriptor_pool_, nullptr);
 }
 
-// void Algorithm::set_push_constants(const std::byte *push_constants_data,
-//                                    const uint32_t push_constants_size) {
-//   spdlog::debug(
-//       "Setting heterogeneous push constants at address: {:#x} with size: {}",
-//       reinterpret_cast<std::uintptr_t>(push_constants_data),
-//       push_constants_size);
-
-//   // delete the previous data if it exists
-//   if (heterogeneous_push_constants_data_) {
-//     delete[] heterogeneous_push_constants_data_;
-//   }
-
-//   heterogeneous_push_constants_size_ = push_constants_size;
-//   heterogeneous_push_constants_data_ = new std::byte[push_constants_size];
-//   std::memcpy(heterogeneous_push_constants_data_,
-//               push_constants_data,
-//               push_constants_size);
-// }
-
 void Algorithm::create_descriptor_pool() {
   std::vector<VkDescriptorPoolSize> pool_sizes{
       {
