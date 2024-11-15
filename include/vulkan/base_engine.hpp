@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "vk_mem_alloc.h"
+
 // -----------------------------------------------------------------------------
 // BaseEngine.hpp
 // -----------------------------------------------------------------------------
@@ -18,7 +19,7 @@ class BaseEngine {
   }
   ~BaseEngine() { destroy(); }
 
-  void destroy();
+  void destroy() const;
 
   [[nodiscard]] std::shared_ptr<VkDevice> get_device_ptr() {
     return std::make_shared<VkDevice>(device_);
@@ -31,11 +32,11 @@ class BaseEngine {
     return compute_queue_index_;
   }
 
-  [[nodiscard]] static VmaAllocator get_allocator() { return vma_allocator; }
+  [[nodiscard]] static VmaAllocator get_allocator() { return vma_allocator_; }
 
  protected:
   void initialize_device();
-  void vma_initialization();
+  void vma_initialization() const;
 
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice physical_device_ = VK_NULL_HANDLE;
@@ -45,5 +46,5 @@ class BaseEngine {
   // device queue index for compute
   uint32_t compute_queue_index_ = 0;
 
-  static VmaAllocator vma_allocator;
+  static VmaAllocator vma_allocator_;
 };

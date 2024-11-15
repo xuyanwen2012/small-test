@@ -34,8 +34,7 @@ function compile_shaders()
 
     for _, shader_file in ipairs(shader_files) do
         local output_path = "$(projectdir)/ppl/vulkan/shaders/compiled_shaders/" .. path.basename(shader_file) .. ".spv"
-        -- local command = "glslangValidator --target-env vulkan1.2 -e main -o " .. output_path .. " " .. shader_file
-        local command = "glslangValidator -V --target-env spirv1.3 " .. shader_file .. " -o " .. output_path
+        local command = "glslangValidator -V --target-env spirv1.3 \"" .. shader_file .. "\" -o \"" .. output_path .. "\""
         print(command)
         os.run(command)
     end

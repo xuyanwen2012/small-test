@@ -17,8 +17,8 @@ class TypedBuffer final : public Buffer {
 
   explicit TypedBuffer(
       std::shared_ptr<VkDevice> device_ptr,
-      size_t count,
-      VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+      const size_t count,
+      const VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
       : Buffer(std::move(device_ptr), count * sizeof(T), usage),
         count_(count),
         mapped_typed_data_(as<T>()) {}
@@ -34,7 +34,6 @@ class TypedBuffer final : public Buffer {
     return mapped_typed_data_[index];
   }
 
-  // at
   T& at(size_t index) {
     assert(index < count_);
     return mapped_typed_data_[index];
@@ -72,8 +71,8 @@ class TypedBuffer final : public Buffer {
   const T* data() const noexcept { return mapped_typed_data_; }
 
   // Span support for modern C++ range operations
-  operator std::span<T>() noexcept { return {mapped_typed_data_, count_}; }
-  operator std::span<const T>() const noexcept {
+  explicit operator std::span<T>() noexcept { return {mapped_typed_data_, count_}; }
+  explicit operator std::span<const T>() const noexcept {
     return {mapped_typed_data_, count_};
   }
 

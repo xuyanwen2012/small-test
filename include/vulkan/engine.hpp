@@ -8,9 +8,10 @@
 #include "buffer.hpp"
 #include "sequence.hpp"
 #include "typed_buffer.hpp"
+
 class Engine final : public BaseEngine {
  public:
-  Engine(bool manage_resources = true) : manage_resources_(manage_resources) {}
+  explicit Engine(const bool manage_resources = true) : manage_resources_(manage_resources) {}
 
   ~Engine();
 
@@ -60,7 +61,7 @@ class Engine final : public BaseEngine {
     return seq;
   }
 
-  void destroy();
+  void destroy() const;
 
  private:
   std::vector<std::weak_ptr<Buffer>> buffers_;

@@ -14,29 +14,14 @@ class Algorithm final : public VulkanResource<VkShaderModule> {
   explicit Algorithm(std::shared_ptr<VkDevice> device_ptr,
                      std::string_view spirv_filename,
                      const std::vector<std::shared_ptr<Buffer>>& buffers,
-                     uint32_t push_constants_size)
-      : VulkanResource<VkShaderModule>(std::move(device_ptr)),
-        spirv_filename_(spirv_filename),
-        usm_buffers_(buffers),
-        push_constants_data_(push_constants_size),
-        push_constants_size_(push_constants_size) {
-    spdlog::debug(
-        "Algorithm::Algorithm() [{}]: Creating algorithm with {} buffers",
-        spirv_filename_,
-        buffers.size());
+                     uint32_t push_constants_size);
 
-    create_shader_module();
+  ~Algorithm() override { Algorithm::destroy(); }
 
-    create_descriptor_set_layout();
-    create_descriptor_pool();
-    allocate_descriptor_sets();
-    update_descriptor_sets();
+ protected:
+  void destroy() override;
 
-    create_pipeline();
-  }
-
-  ~Algorithm() override { destroy(); }
-
+public:
   [[nodiscard]] bool has_push_constants() const {
     return push_constants_size_ > 0;
   }
@@ -48,16 +33,15 @@ class Algorithm final : public VulkanResource<VkShaderModule> {
   }
 
   void update_descriptor_sets_with_buffers(
-      const std::vector<std::shared_ptr<Buffer>>& buffers);
-  void update_descriptor_sets();
+      const std::vector<std::shared_ptr<Buffer>>& buffers) const;
+  void update_descriptor_sets() const;
 
   void record_bind_core(VkCommandBuffer cmd_buf) const;
   void record_bind_push(VkCommandBuffer cmd_buf) const;
-  void record_dispatch_with_blocks(VkCommandBuffer cmd_buf,
-                                   uint32_t n_blocks) const;
+  static void record_dispatch_with_blocks(VkCommandBuffer cmd_buf,
+                                          uint32_t n_blocks);
 
  private:
-  void destroy() override;
 
   void create_shader_module();
   void create_pipeline();
